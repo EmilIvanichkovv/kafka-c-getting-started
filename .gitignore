@@ -1,2 +1,5 @@
 # direnv temporary files
 .direnv/
+
+# build files
+.build/

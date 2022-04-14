@@ -35,7 +35,7 @@
 // }
 
 int main() {
-    printf("hellp");
+    printf("hello");
 
     return 0;
 }

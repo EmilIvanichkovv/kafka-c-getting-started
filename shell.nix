@@ -13,6 +13,7 @@ mkShell {
     rdkafka
     glib
   ];
+
   shellHook = ''
     figlet "Welcome to Kafka C - Getting Started"
     echo $LIBCLANG_PATH
