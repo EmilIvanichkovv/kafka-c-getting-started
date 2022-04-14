@@ -2,4 +2,4 @@
 .direnv/
 
 # build files
-.build/
+build/

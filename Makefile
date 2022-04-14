@@ -1,20 +1,9 @@
-.PHONY: src
-
-# ALL: producer consumer
+# .ALL: src/producer src/consumer
 
 CFLAGS=-Wall $(shell pkg-config --cflags --libs rdkafka glib-2.0)
 
-build:
-	@mkdir -p build
-	gcc src/common.c -o build/app $(CFLAGS)
+producer:
+	gcc src/producer.c -o build/producer $(CFLAGS)
 
-run:
-	@make build
-	@echo ------------------------------------------------------------------------------------------------------------------------------------------------------
-	@build/app
-
-clean:
-	rm -rf build
-
-test:
-	@make build
+consumer:
+	gcc src/consumer.c -o build/consumer $(CFLAGS)
