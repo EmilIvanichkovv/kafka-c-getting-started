@@ -20,7 +20,7 @@ consumer:
 	gcc src/consumer.c -o build/consumer $(CFLAGS)
 
 nimkafka_cpp:
-	nim --passL:"$(NIMFLAGS)" --passC:"$(NIMINCLUDES)" -o:build/nimkafka  --verbosity:2 cpp src/nimkafka.nim
+	nim  -o:build/nimkafka  --verbosity:2 cpp src/nimkafka.nim
 
 nimkafka_c:
 	nim --passL:"$(NIMFLAGS)" --passC:"$(NIMINCLUDES)" -o:build/nimkafka_c  --verbosity:2 c src/nimkafka_c.nim
