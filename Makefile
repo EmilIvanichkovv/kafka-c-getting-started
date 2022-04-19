@@ -13,9 +13,6 @@ producer:
 producer_cpp:
 	g++ src/producer.cpp -o build/producer_cpp -l:librdkafka++.so $(CFLAGS) $(CPPFLAGS)
 
-producer_nim:
-	nim --passL:"$(NIMFLAGS)" --passC:"$(NIMINCLUDES)" -o:build/producer_nim cpp src/producer.nim
-
 consumer:
 	gcc src/consumer.c -o build/consumer $(CFLAGS)
 
@@ -24,3 +21,7 @@ nimkafka_cpp:
 
 nimkafka_c:
 	nim --passL:"$(NIMFLAGS)" --passC:"$(NIMINCLUDES)" -o:build/nimkafka_c  --verbosity:2 c src/nimkafka_c.nim
+
+producer_nim:
+	make nimkafka_cpp
+	nim --passL:"$(NIMFLAGS)" --passC:"$(NIMINCLUDES)" -o:build/producer_nim cpp src/producer.nim
