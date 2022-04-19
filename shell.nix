@@ -8,6 +8,7 @@ mkShell {
   buildInputs = [
     nix-prefetch-git
     figlet
+    nim
     gcc
     pkg-config
     rdkafka
