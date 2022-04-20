@@ -2,33 +2,42 @@ import ./nimkafka
 import ./nimkafka_c
 import cppstl
 
-echo rd_kafka_version_cpp()
 
-var a: PConf
-echo ConfType.CONF_GLOBAL
-var b = create(ConfType.CONF_GLOBAL)
-echo b.typeof
-echo b[].typeof
-
+var a: ptr Conf
+var conf = create(ConfType.CONF_GLOBAL)
 
 let
   name = "bootstrap.servers".initCppString
   broker = "localhost:9092".initCppString
 var str = initCppString()
 
-let res = set(b, name, broker, str)
-echo res
-echo $str
-
-# # Create conf with c 
-# var kafkaConf: PRDKConf
-# kafkaConf = rd_kafka_conf_new()
-# # var topicConf: PRDKTopicConf
-# var errstr: cstring = ""
-# var res_c: RDKConfRes
-# res_c = rd_kafka_conf_set(kafkaConf, cast[cstring]("bootstrap.servers"), cast[cstring]("localhost:9092"), errstr, 256)
-# echo res_c
+let res = set(conf, name, broker, str)
+echo $res
+echo str.cStr
 
 # Try to use dump
-let dumpRes = b.dump
-echo $dumpRes[]
+let dumpRes = conf.dump
+echo dumpRes[].begin[]
+echo dumpRes[].size
+
+proc printConf(confDump: List[CppString]) =
+  var it = confDump.begin()
+  for i in 0 ..< confDump.size() div 2:
+    echo it[] , "= ".initCppString , it.next()[]
+    it = it.next()
+    it = it.next()
+
+dumpRes[].printConf
+let topic = "purchases".initCppString
+var message:cstring = "MESSAGE"
+let producer = create(conf, str)
+echo str.cStr
+let produceRes = producer.produce(topic,
+                                  -1,
+                                  cast[cint](2),
+                                  message, 100,
+                                  nil, 0,
+                                  0,
+                                  nil,
+                                  nil)
+echo produceRes
