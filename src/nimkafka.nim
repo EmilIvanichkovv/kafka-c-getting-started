@@ -237,9 +237,10 @@ type
   Headers* {.header: irr,
              importcpp: "RdKafka::Headers".} = object
   PHeaders = ptr Headers
-#  Topic Utils:
+# Topic Utils:
 
 const PARTITION_UA*:int32 = -1
+
 # Producer Utils:
 
 type
@@ -267,3 +268,7 @@ proc produce*(producer: PProducer,
               headers: PHeaders,
               msg_opague: pointer): int
   {.header: irr, importcpp: "#.produce(@)".}
+
+proc flush*(producer: PProducer,
+            timepot_sec: int): int
+  {.header: irr, importcpp: "#.flush(@)".}
