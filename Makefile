@@ -1,6 +1,6 @@
 # .ALL: src/producer src/consumer
 
-CFLAGS=-Wall $(shell pkg-config --cflags --libs rdkafka glib-2.0)
+CFLAGS=-Wall $(shell pkg-config --cflags --libs rdkafka glib-2.0 )
 CPPFLAGS := $(subst strict-dwarf,,$(CPPFLAGS))
 NIMFLAGS := $(shell pkg-config --libs rdkafka)
 
@@ -25,3 +25,9 @@ nimkafka_c:
 producer_nim:
 	make nimkafka_cpp
 	nim --verbosity:2 --passL:"$(NIMFLAGS)" --passC:"$(NIMINCLUDES)" -o:build/producer_nim cpp src/producer.nim
+
+avro-example:
+	gcc src/avro_example.c -o build/avro_example -I/nix/store/v6cl3vv8a8x9fn80n9d9xrbalnhld8g8-avro-c-1.11.0/include -L/nix/store/v6cl3vv8a8x9fn80n9d9xrbalnhld8g8-avro-c-1.11.0/lib -lavro
+
+nimavro:
+	nim --passL:"-L/nix/store/v6cl3vv8a8x9fn80n9d9xrbalnhld8g8-avro-c-1.11.0/lib" --passC:"-I/nix/store/v6cl3vv8a8x9fn80n9d9xrbalnhld8g8-avro-c-1.11.0/include" -o:build/nimavro  --verbosity:2 c libs/nim_avro/nimavro.nim
