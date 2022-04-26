@@ -17,11 +17,11 @@ consumer:
 	gcc src/consumer.c -o build/consumer $(CFLAGS)
 
 nimkafka_cpp:
-	nim  -o:build/nimkafka  --verbosity:2 cpp src/nimkafka.nim
+	nim  -o:build/nimkafka  --verbosity:2 cpp libs/nim_kafka/nimkafka.nim
 
 nimkafka_c:
-	nim --passL:"$(NIMFLAGS)" --passC:"$(NIMINCLUDES)" -o:build/nimkafka_c  --verbosity:2 c src/nimkafka_c.nim
+	nim --passL:"$(NIMFLAGS)" --passC:"$(NIMINCLUDES)" -o:build/nimkafka_c  --verbosity:2 c libs/nim_kafka/nimkafka_c.nim
 
 producer_nim:
 	make nimkafka_cpp
-	nim --passL:"$(NIMFLAGS)" --passC:"$(NIMINCLUDES)" -o:build/producer_nim cpp src/producer.nim
+	nim --verbosity:2 --passL:"$(NIMFLAGS)" --passC:"$(NIMINCLUDES)" -o:build/producer_nim cpp src/producer.nim

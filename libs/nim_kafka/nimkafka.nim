@@ -12,7 +12,7 @@ type
   ListIter*[T]                          {.importcpp: "std::list<'0>::iterator", header: "<list>".} = object
 
 proc initList*[T](): List[T]            {.importcpp: "std::list<'*0>()", constructor, header: "<list>".}
-proc size*(l: List): csize_t            {.importcpp: "size", header: "<list>".}
+proc size*(l: List): int            {.importcpp: "size", header: "<list>".}
 proc begin*[T](l: List[T]): ListIter[T] {.importcpp: "begin", header: "<list>".}
 proc `[]`*[T](it: ListIter[T]): T       {.importcpp: "*#", header: "<list>".}
 proc next*[T](it: ListIter[T]; n = 1): ListIter[T] {.importcpp: "next(@)", header: "<iterator>".}
@@ -35,7 +35,7 @@ proc toSeq*[T](l: List[T]): seq[T] =
 # VERSION
 
 proc rd_kafka_version_cpp*(): int {.
-                                    dynlib: librdkafka,
+                                    # dynlib: librdkafka,
                                     header: irr,
                                     importcpp: "RdKafka::version()"
                                     .}
@@ -240,11 +240,10 @@ type
 # Topic Utils:
 
 const PARTITION_UA*:int32 = -1
-
 # Producer Utils:
 
 type
-  Producer* {.header: irr,
+  Producer* {. header: irr,
              importcpp: "RdKafka::Producer".} = object
   PProducer* = ptr Producer
 

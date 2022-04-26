@@ -1,5 +1,5 @@
-import ./nimkafka
-import ./nimkafka_c
+import ../libs/nim_kafka/nimkafka
+import ../libs/nim_kafka/nimkafka_c
 import cppstl
 
 
@@ -11,6 +11,13 @@ let
   broker = "localhost:9092".initCppString
 var str = initCppString()
 
+type
+  testObj = object
+    name: string
+    age: int
+
+var jon = testObj(name: "Jon", age: 21)
+echo jon
 let res = set(conf, name, broker, str)
 echo $res
 echo str.cStr
@@ -30,14 +37,22 @@ proc printConf(confDump: List[CppString]) =
 dumpRes[].printConf
 let topic = "purchases".initCppString
 var message:cstring = "MESSAGE"
-let producer = create(conf, str)
-echo str.cStr
+
+var producerErr = initCppString()
+let producer = create(conf, producerErr)
+
+echo producerErr.cStr
 let produceRes = producer.produce(topic,
                                   -1,
-                                  cast[cint](2),
-                                  message, 100,
+                                  2,
+                                  message, 200,
                                   nil, 0,
                                   0,
                                   nil,
                                   nil)
+let flushRes = producer.flush(500)
+echo flushRes
+
 echo produceRes
+
+echo rd_kafka_version_cpp()
