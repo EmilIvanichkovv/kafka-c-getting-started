@@ -12,11 +12,11 @@ mkShell {
     gcc
     pkg-config
     rdkafka
+    avro-c
     glib
   ];
 
   shellHook = ''
-    nimble install cppstl
     figlet "Welcome to Kafka C - Getting Started"
     echo $LIBCLANG_PATH
 
