@@ -4,7 +4,7 @@ const
 
 # Basics
 type
-  avroType_t* = enum
+  AvroTypeT* = enum
     AVRO_STRING
     AVRO_BYTES
     AVRO_INT32
@@ -21,122 +21,190 @@ type
     AVRO_UNION
     AVRO_LINK
 
-  classType_t* = enum
+  AvroClassT* = enum
     AVRO_SCHEMA
     AVRO_DATUM
 
-  AvroObj_t* = object
-    avroType: avroType_t
-    classType: classType_t
-    refcount: int
+  AvroObjT* = object
+    avroType*: AvroTypeT
+    classType*: AvroClassT
+    refcount*: int
 
-  AvroSchema_t* = ptr AvroObj_t
-  PAvroSchema_t* = ptr AvroSchema_t
+  AvroSchemaT* = ptr AvroObjT
+  PAvroSchemaT* = ptr AvroSchemaT
+# Data
 
+type
+  AvroWrappedBufferT* = object
+  AvroWrappedBuffer* {.bycopy.} = object
+    buf*: pointer
+    size*: int
+    userData*: pointer
+    free*: proc (self: ptr AvroWrappedBufferT) {.cdecl.}
+    copy*: proc (dest: ptr AvroWrappedBufferT; src: ptr AvroWrappedBufferT;
+               offset: int; length: int): cint {.cdecl.}
+    slice*: proc (self: ptr AvroWrappedBufferT; offset: int; length: int): cint {.
+        cdecl.}
 # Errors
-proc avro_strerror*(): string
+proc avroStrerror*(): string
   {.cdecl, importc: "avro_strerror", dynlib: avrodll.}
 
 # IO
 type
-  AvroFileReader_t* = object
-  PAvroFileReader_t* = ref AvroFileReader_t
-  AvroFileWriter_t* = object
-  PAvroFileWriter_t* = ref AvroFileWriter_t
+  AvroFileReaderT* = object
+  PAvroFileReaderT* = ref AvroFileReaderT
+  AvroFileWriterT* = object
+  PAvroFileWriterT* = ref AvroFileWriterT
 
 proc avro_file_writer_create*(path: cstring,
-                              schema: AvroSchema_t,
-                              writer: PAvroFileWriter_t): int
+                              schema: AvroSchemaT,
+                              writer: ptr AvroFileWriterT): int
   {.cdecl, importc: "avro_file_writer_create", dynlib: avrodll.}
 
 proc avro_file_writer_create_with_codec*(path: cstring,
-                                         schema: AvroSchema_t,
-                                         writer: PAvroFileWriter_t,
+                                         schema: AvroSchemaT,
+                                         writer: ptr AvroFileWriterT,
                                          codec: cstring,
                                          blockSize: int ): int
   {.cdecl, importc: "avro_file_writer_create_with_codec", dynlib: avrodll.}
 
 # Value
+
 type
-  AvroValueIFace_t* = object
-    {.importc: "struct avro_value_iface" header: hrr.}
-
-  PAvroValueIFace_t* = ref AvroValueIFace_t
-
-  AvroValue_t* = object
-    iface*: PAvroValueIFace_t
+  AvroValueT* {.bycopy.} = object
+    iface*: ptr AvroValueIfaceT
     self*: pointer
-  PAvroValue_t* =ref AvroValue_t
 
-proc avro_value_get_by_name*(valuea: PAvroValueIFace_t,
-                             value: PAvroValueIFace_t,
-                             self: pointer,
-                             name: cstring,
-                             child: PAvroValue_t,
-                             index: int): int
-  {.cdecl,header:hrr, importcpp: "#.get_by_name(@)".}
 
-# template avro_value_get_by_name(value: PAvroValue_t,
-#                                 name: cstring,
-#                                 child: PAvroValue_t,
-#                                 index: int =
-#   {.emit: "avro_value_get_by_name(",value, name, child, index, ")".}
-
+  AvroValueIfaceT* {.bycopy.} = object
+    increfIface*: proc (iface: ptr AvroValueIfaceT): ptr AvroValueIfaceT {.cdecl.}
+    decrefIface*: proc (iface: ptr AvroValueIfaceT) {.cdecl.}
+    incref*: proc (value: ptr AvroValueT) {.cdecl.}
+    decref*: proc (value: ptr AvroValueT) {.cdecl.}
+    reset*: proc (iface: ptr AvroValueIfaceT; self: pointer): cint {.cdecl.}
+    getType*: proc (iface: ptr AvroValueIfaceT; self: pointer): AvroTypeT {.cdecl.}
+    getSchema*: proc (iface: ptr AvroValueIfaceT; self: pointer): AvroSchemaT {.cdecl.}
+    getBoolean*: proc (iface: ptr AvroValueIfaceT; self: pointer; `out`: ptr cint): cint {.
+        cdecl.}
+    getBytes*: proc (iface: ptr AvroValueIfaceT; self: pointer; buf: ptr pointer;
+                   size: ptr int): cint {.cdecl.}
+    grabBytes*: proc (iface: ptr AvroValueIfaceT; self: pointer;
+                    dest: ptr AvroWrappedBufferT): cint {.cdecl.}
+    getDouble*: proc (iface: ptr AvroValueIfaceT; self: pointer; `out`: ptr cdouble): cint {.
+        cdecl.}
+    getFloat*: proc (iface: ptr AvroValueIfaceT; self: pointer; `out`: ptr cfloat): cint {.
+        cdecl.}
+    getInt*: proc (iface: ptr AvroValueIfaceT; self: pointer; `out`: ptr int32): cint {.
+        cdecl.}
+    getLong*: proc (iface: ptr AvroValueIfaceT; self: pointer; `out`: ptr int64): cint {.
+        cdecl.}
+    getNull*: proc (iface: ptr AvroValueIfaceT; self: pointer): cint {.cdecl.}
+    getString*: proc (iface: ptr AvroValueIfaceT; self: pointer; str: cstringArray;
+                    size: ptr int): cint {.cdecl.}
+    grabString*: proc (iface: ptr AvroValueIfaceT; self: pointer;
+                     dest: ptr AvroWrappedBufferT): cint {.cdecl.}
+    getEnum*: proc (iface: ptr AvroValueIfaceT; self: pointer; `out`: ptr cint): cint {.
+        cdecl.}
+    getFixed*: proc (iface: ptr AvroValueIfaceT; self: pointer; buf: ptr pointer;
+                   size: ptr int): cint {.cdecl.}
+    grabFixed*: proc (iface: ptr AvroValueIfaceT; self: pointer;
+                    dest: ptr AvroWrappedBufferT): cint {.cdecl.}
+    setBoolean*: proc (iface: ptr AvroValueIfaceT; self: pointer; val: cint): cint {.cdecl.}
+    setBytes*: proc (iface: ptr AvroValueIfaceT; self: pointer; buf: pointer;
+                   size: int): cint {.cdecl.}
+    giveBytes*: proc (iface: ptr AvroValueIfaceT; self: pointer;
+                    buf: ptr AvroWrappedBufferT): cint {.cdecl.}
+    setDouble*: proc (iface: ptr AvroValueIfaceT; self: pointer; val: cdouble): cint {.
+        cdecl.}
+    setFloat*: proc (iface: ptr AvroValueIfaceT; self: pointer; val: cfloat): cint {.cdecl.}
+    setInt*: proc (iface: ptr AvroValueIfaceT; self: pointer; val: int32): cint {.cdecl.}
+    setLong*: proc (iface: ptr AvroValueIfaceT; self: pointer; val: int64): cint {.cdecl.}
+    setNull*: proc (iface: ptr AvroValueIfaceT; self: pointer): cint {.cdecl.}
+    setString*: proc (iface: ptr AvroValueIfaceT; self: pointer; str: cstring): cint {.
+        cdecl.}
+    setStringLen*: proc (iface: ptr AvroValueIfaceT; self: pointer; str: cstring;
+                       size: int): cint {.cdecl.}
+    giveStringLen*: proc (iface: ptr AvroValueIfaceT; self: pointer;
+                        buf: ptr AvroWrappedBufferT): cint {.cdecl.}
+    setEnum*: proc (iface: ptr AvroValueIfaceT; self: pointer; val: cint): cint {.cdecl.}
+    setFixed*: proc (iface: ptr AvroValueIfaceT; self: pointer; buf: pointer;
+                   size: int): cint {.cdecl.}
+    giveFixed*: proc (iface: ptr AvroValueIfaceT; self: pointer;
+                    buf: ptr AvroWrappedBufferT): cint {.cdecl.}
+    getSize*: proc (iface: ptr AvroValueIfaceT; self: pointer; size: ptr int): cint {.
+        cdecl.}
+    getByIndex*: proc (iface: ptr AvroValueIfaceT; self: pointer; index: int;
+                     child: ptr AvroValueT; name: cstringArray): cint {.cdecl.}
+    getByName*: proc (iface: ptr AvroValueIfaceT; self: pointer; name: cstring;
+                    child: ptr AvroValueT; index: ptr int): cint {.cdecl.}
+    getDiscriminant*: proc (iface: ptr AvroValueIfaceT; self: pointer; `out`: ptr cint): cint {.
+        cdecl.}
+    getCurrentBranch*: proc (iface: ptr AvroValueIfaceT; self: pointer;
+                           branch: ptr AvroValueT): cint {.cdecl.}
+    append*: proc (iface: ptr AvroValueIfaceT; self: pointer; childOut: ptr AvroValueT;
+                 newIndex: ptr int): cint {.cdecl.}
+    add*: proc (iface: ptr AvroValueIfaceT; self: pointer; key: cstring;
+              child: ptr AvroValueT; index: ptr int; isNew: ptr cint): cint {.cdecl.}
+    setBranch*: proc (iface: ptr AvroValueIfaceT; self: pointer; discriminant: cint;
+                    branch: ptr AvroValueT): cint {.cdecl.}
 
 # Generic
-proc avro_generic_class_from_schema*(schema: AvroSchema_t): PAvroValueIFace_t
+proc avro_generic_class_from_schema*(schema: AvroSchemaT): ptr AvroValueIfaceT
   {.cdecl, importc: "avro_generic_class_from_schema", dynlib: avrodll.}
 
-proc avro_generic_value_new*(iface: PAvroValueIFace_t, dest: PAvroValue_t): int
+proc avro_generic_value_new*(iface: ptr AvroValueIfaceT, dest: ptr AvroValueT): int
   {.cdecl, importc: "avro_generic_value_new", dynlib: avrodll.}
 
 # Schemas
-proc avro_schema_string*(): AvroSchema_t
-  {.cdecl, importc: "avro_schema_string", dynlib: avrodll.}
+proc avroSchemaString*(): AvroSchemaT{.
+  cdecl, importc: "avro_schema_string", dynlib: avrodll.}
 
-proc avro_schema_bytes*(): AvroSchema_t
-  {.cdecl, importc: "avro_schema_bytes", dynlib: avrodll.}
+proc avroSchemaBytes*(): AvroSchemaT{.
+  cdecl, importc: "avro_schema_bytes", dynlib: avrodll.}
 
-proc avro_schema_int*(): AvroSchema_t
-  {.cdecl, importc: "avro_schema_int", dynlib: avrodll.}
+proc avroSchemaInt*(): AvroSchemaT{.
+  cdecl, importc: "avro_schema_int", dynlib: avrodll.}
 
-proc avro_schema_long*(): AvroSchema_t
-  {.cdecl, importc: "avro_schema_long", dynlib: avrodll.}
+proc avroSchemaLong*(): AvroSchemaT{.
+  cdecl, importc: "avro_schema_long", dynlib: avrodll.}
 
-proc avro_schema_float*(): AvroSchema_t
-  {.cdecl, importc: "avro_schema_float", dynlib: avrodll.}
+proc avroSchemaFloat*(): AvroSchemaT{.
+  cdecl, importc: "avro_schema_float", dynlib: avrodll.}
 
-proc avro_schema_double*(): AvroSchema_t
-  {.cdecl, importc: "avro_schema_double", dynlib: avrodll.}
+proc avroSchemaDouble*(): AvroSchemaT{.
+  cdecl, importc: "avro_schema_double", dynlib: avrodll.}
 
-proc avro_schema_boolean*(): AvroSchema_t
-  {.cdecl, importc: "avro_schema_boolean", dynlib: avrodll.}
+proc avroSchemaBoolean*(): AvroSchemaT{.
+  cdecl, importc: "avro_schema_boolean", dynlib: avrodll.}
 
-proc avro_schema_null*(): AvroSchema_t
-  {.cdecl, importc: "avro_schema_null", dynlib: avrodll.}
+proc avroSchemaNull*(): AvroSchemaT{.
+  cdecl, importc: "avro_schema_null", dynlib: avrodll.}
 
-proc avro_schema_record*(name: cstring, space: cstring): AvroSchema_t
-  {.cdecl, importc: "avro_schema_record", dynlib: avrodll.}
+proc avroSchemaRecord*(name: cstring; space: cstring): AvroSchemaT{.
+  cdecl, importc: "avro_schema_record", dynlib: avrodll.}
 
-proc avro_schema_record_field_get*(record: AvroSchema_t, fieldName: cstring): AvroSchema_t
-  {.cdecl, importc: "avro_schema_record_field_get", dynlib: avrodll.}
+proc avroSchemaRecordFieldGet*(record: AvroSchemaT; fieldName: cstring): AvroSchemaT {.
+  cdecl, importc: "avro_schema_record_field_get", dynlib: avrodll.}
 
-proc avro_schema_record_field_name*(schema: AvroSchema_t, index: int): cstring
-  {.cdecl, importc: "avro_schema_record_field_name", dynlib: avrodll.}
+proc avroSchemaRecordFieldName*(schema: AvroSchemaT; index: cint): cstring {.cdecl,
+  importc: "avro_schema_record_field_name", dynlib: avrodll.}
 
-proc avro_schema_record_field_get_index*(schema: AvroSchema_t, fieldName: cstring): int
-  {.cdecl, importc: "avro_schema_record_field_get_index", dynlib: avrodll.}
+proc avroSchemaRecordFieldGetIndex*(schema: AvroSchemaT; fieldName: cstring): cint {.
+  cdecl, importc: "avro_schema_record_field_get_index", dynlib: avrodll.}
 
-proc avro_schema_record_field_get_by_index*(schema: AvroSchema_t, index: int): AvroSchema_t
-  {.cdecl, importc: "avro_schema_record_field_get_by_index", dynlib: avrodll.}
+proc avroSchemaRecordFieldGetByIndex*(record: AvroSchemaT; index: cint): AvroSchemaT {.
+  cdecl, importc: "avro_schema_record_field_get_by_index", dynlib: avrodll.}
 
-proc avro_schema_record_field_append*(record: AvroSchema_t,
-                                     fieldName: cstring,
-                                     fieldType: AvroSchema_t): int
-  {.cdecl, importc: "avro_schema_record_field_append", dynlib: avrodll.}
+proc avroSchemaRecordFieldAppend*(record: AvroSchemaT;
+                                  fieldName: cstring;
+                                  `type`: AvroSchemaT): cint {.
+  cdecl, importc: "avro_schema_record_field_append", dynlib: avrodll.}
 
-proc avro_schema_from_json_length*(jsonSchema: cstring ,size: int, avroSchema: PAvroSchema_t): int
-  {.cdecl, importc: "avro_schema_from_json_length", dynlib: avrodll.}
+proc avroSchemaRecordSize*(record: AvroSchemaT): int {.cdecl,
+    importc: "avro_schema_record_size", dynlib: avrodll.}
 
-proc avro_schema_record_size*(schema: AvroSchema_t):int
-  {.cdecl, importc: "avro_schema_record_size", dynlib: avrodll.}
+proc avroSchemaFromJsonLength*(jsontext: cstring; length: int;
+                              schema: ptr AvroSchemaT): cint {.cdecl,
+    importc: "avro_schema_from_json_length", dynlib: avrodll.}
+# proc avro_schema_record_size*(schema: AvroSchemaT):int
+#   {.cdecl, importc: "avro_schema_record_size", dynlib: avrodll.}
