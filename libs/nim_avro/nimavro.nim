@@ -48,31 +48,11 @@ type
 # Errors
 proc avroStrerror*(): string
   {.cdecl, importc: "avro_strerror", dynlib: avrodll.}
-
-# IO
-type
-  AvroFileReaderT* = object
-  PAvroFileReaderT* = ref AvroFileReaderT
-  AvroFileWriterT* = object
-  PAvroFileWriterT* = ref AvroFileWriterT
-
-proc avro_file_writer_create*(path: cstring,
-                              schema: AvroSchemaT,
-                              writer: ptr AvroFileWriterT): int
-  {.cdecl, importc: "avro_file_writer_create", dynlib: avrodll.}
-
-proc avro_file_writer_create_with_codec*(path: cstring,
-                                         schema: AvroSchemaT,
-                                         writer: ptr AvroFileWriterT,
-                                         codec: cstring,
-                                         blockSize: int ): int
-  {.cdecl, importc: "avro_file_writer_create_with_codec", dynlib: avrodll.}
-
 # Value
 
 type
   AvroValueT* {.bycopy.} = object
-    iface*: ptr AvroValueIfaceT
+    iface*:ptr AvroValueIfaceT
     self*: pointer
 
 
@@ -148,12 +128,73 @@ type
     setBranch*: proc (iface: ptr AvroValueIfaceT; self: pointer; discriminant: cint;
                     branch: ptr AvroValueT): cint {.cdecl.}
 
-# Generic
-proc avro_generic_class_from_schema*(schema: AvroSchemaT): ptr AvroValueIfaceT
-  {.cdecl, importc: "avro_generic_class_from_schema", dynlib: avrodll.}
+# IO
+type
+  AvroReaderT* = object
+  AvroWriterT* = object
 
-proc avro_generic_value_new*(iface: ptr AvroValueIfaceT, dest: ptr AvroValueT): int
-  {.cdecl, importc: "avro_generic_value_new", dynlib: avrodll.}
+proc avroWriterFlush*(writer: AvroWriterT) {.cdecl, importc: "avro_writer_flush",
+    dynlib: avrodll.}
+
+proc avroWriterFree*(writer: AvroWriterT) {.cdecl, importc: "avro_writer_free",
+    dynlib: avrodll.}
+
+proc avroWriterReset*(writer: AvroWriterT) {.cdecl, importc: "avro_writer_reset",
+    dynlib: avrodll.}
+
+proc avroSchemaToJson*(schema: AvroSchemaT; `out`: AvroWriterT): cint {.cdecl,
+    importc: "avro_schema_to_json", dynlib: avrodll.}
+
+
+type
+  AvroFileReaderT* = object
+  AvroFileWriterT* = object
+
+proc avroFileWriterCreate*(path: cstring; schema: AvroSchemaT;
+                          writer: ptr AvroFileWriterT): cint {.cdecl,
+    importc: "avro_file_writer_create", dynlib: avrodll.}
+
+proc avroFileWriterCreateWithCodec*(path: cstring; schema: AvroSchemaT;
+                                   writer: ptr AvroFileWriterT; codec: cstring;
+                                   blockSize: int): cint {.cdecl,
+    importc: "avro_file_writer_create_with_codec", dynlib: avrodll.}
+
+proc avroFileWriterSync*(writer: AvroFileWriterT): cint {.cdecl,
+    importc: "avro_file_writer_sync", dynlib: avrodll.}
+
+proc avroFileWriterAppendValue*(writer: AvroFileWriterT; src: ptr AvroValueT): cint {.
+    cdecl, importc: "avro_file_writer_append_value", dynlib: avrodll.}
+
+proc avroFileWriterOpen*(path: cstring; writer: ptr AvroFileWriterT): cint {.cdecl,
+    importc: "avro_file_writer_open", dynlib: avrodll.}
+
+
+
+# Generic
+proc avroGenericClassFromSchema*(schema: AvroSchemaT): ptr AvroValueIfaceT {.cdecl,
+    importc: "avro_generic_class_from_schema", dynlib: avrodll.}
+
+proc avroGenericValueNew*(iface: ptr AvroValueIfaceT; dest: ptr AvroValueT): int {.
+    cdecl, importc: "avro_generic_value_new", dynlib: avrodll.}
+
+proc avroGenericBooleanNew*(value: ptr AvroValueT; val: cint): cint {.cdecl,
+    importc: "avro_generic_boolean_new", dynlib: avrodll.}
+proc avroGenericBytesNew*(value: ptr AvroValueT; buf: pointer; size: int): cint {.
+    cdecl, importc: "avro_generic_bytes_new", dynlib: avrodll.}
+proc avroGenericDoubleNew*(value: ptr AvroValueT; val: cdouble): cint {.cdecl,
+    importc: "avro_generic_double_new", dynlib: avrodll.}
+proc avroGenericFloatNew*(value: ptr AvroValueT; val: cfloat): cint {.cdecl,
+    importc: "avro_generic_float_new", dynlib: avrodll.}
+proc avroGenericIntNew*(value: ptr AvroValueT; val: int32): cint {.cdecl,
+    importc: "avro_generic_int_new", dynlib: avrodll.}
+proc avroGenericLongNew*(value: ptr AvroValueT; val: int64): cint {.cdecl,
+    importc: "avro_generic_long_new", dynlib: avrodll.}
+proc avroGenericNullNew*(value: ptr AvroValueT): cint {.cdecl,
+    importc: "avro_generic_null_new", dynlib: avrodll.}
+proc avroGenericStringNew*(value: ptr AvroValueT; val: cstring): cint {.cdecl,
+    importc: "avro_generic_string_new", dynlib: avrodll.}
+proc avroGenericStringNewLength*(value: ptr AvroValueT; val: cstring; size: int): cint {.
+    cdecl, importc: "avro_generic_string_new_length", dynlib: avrodll.}
 
 # Schemas
 proc avroSchemaString*(): AvroSchemaT{.
