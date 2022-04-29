@@ -1,4 +1,5 @@
 import ../libs/nim_avro/nimavro
+import std/os
 
 let PERSON_SCHEMA =
   """
@@ -11,14 +12,18 @@ let PERSON_SCHEMA =
          {\"name\": \"Phone\", \"type\": \"string\"},\
          {\"name\": \"Age\", \"type\": \"int\"}]}
   """
-var testSchema: PAvroSchema_t
-var idCounter:int32
-
+let otherChema =  "{\"type\":\"record\","&
+                    "\"name\":\"myrecord\","&
+                    "\"fields\":[{\"name\":\"f1\",\"type\":\"string\"}]}"
 var err: string
-# let jsonSchema = avro_schema_from_json_length(PERSON_SCHEMA.cstring, PERSON_SCHEMA.len, testSchema)
+var idCounter:int64
+
+# var testSchema: AvroSchema_t
+
+# let jsonSchema = avroSchemaFromJsonLength(otherChema.cstring, otherChema.len+1, testSchema.addr)
 # echo jsonSchema
-err = avro_strerror()
-echo err
+# err = avroStrerror()
+# echo err
 
 
 proc initPersonSchema(): AvroSchema_t =
@@ -38,32 +43,72 @@ proc initPersonSchema(): AvroSchema_t =
     res = avro_schema_record_field_append(personSchema, "Age", age)
     personSchema
 
-proc addPerson(schema: AvroSchema_t,
-              #  db: AvroFileWriter_t,
-              #  first, last, phone: cstring,
-              #  age: int
+
+
+proc addPerson(schema: AvroSchemaT,
+               db: AvroFileWriterT,
+               first, last, phone: cstring,
+               age: int
                ) =
   var res: int
 
-  let
-    personClass = avro_generic_class_from_schema(schema)
   var
-    person: PAvroValue_t
-    id_value: PAvroValue_t
-    first_value: PAvroValue_t
-    last_value: PAvroValue_t
-    age_value: PAvroValue_t
-    phone_value: PAvroValue_t
+    personClass = avroGenericClassFromSchema(schema)
+    person: AvroValueT
+    id_value: AvroValueT
+    first_value: AvroValueT
+    last_value: AvroValueT
+    age_value: AvroValueT
+    phone_value: AvroValueT
+    count: int
 
-  res = avro_generic_value_new(personClass, person)
-  echo person.iface.avro_value_get_by_name(person.iface, person.self, "First", first_value, 0)
+  res = avroGenericValueNew(personClass, person.addr)
+  # res = avroGenericLongNew(age_value.addr, 0)
+  # Set ID
+  if person.iface.getByName(person.iface, person.self, "ID".cstring,
+                            id_value.addr, count.addr) == 0:
+    res = id_value.iface.setLong(id_value.iface, id_value.self, idCounter)
+    idCounter = idCounter + 1
+  # Set First Name
+  if person.iface.getByName(person.iface, person.self, "First".cstring,
+                            first_value.addr, count.addr) == 0:
+    res = first_value.iface.setString(first_value.iface, first_value.self, first)
 
+  # Set Last Name
+  if person.iface.getByName(person.iface, person.self, "Last".cstring,
+                            last_value.addr, count.addr) == 0:
+    res = last_value.iface.setString(last_value.iface, last_value.self, last)
 
-let personSchema = initPersonSchema();
+  # Set Phone
+  if person.iface.getByName(person.iface, person.self, "Phone".cstring,
+                            phone_value.addr, count.addr) == 0:
+    res = phone_value.iface.setString(phone_value.iface, phone_value.self, last)
 
+  # Set Age
+  if person.iface.getByName(person.iface, person.self, "Age".cstring,
+                            age_value.addr, count.addr) == 0:
+    res = age_value.iface.setInt(age_value.iface, age_value.self, age.int32)
+
+  res = avroFileWriterAppendValue(db, person.addr)
+    # echo "Fail"
+
+var personSchema = initPersonSchema();
+echo avroSchemaRecordSize(personSchema)
 var
-  db: PAvroFileWriter_t
-  dbname = "test.db".cstring
+  db: AvroFileWriterT
+  dbname = "test.db"
+  self: pointer
+  count = 1
+  first_value: AvroValueT
 
-let createWriter = avro_file_writer_create(dbname, personSchema, db)
-addPerson(personSchema)
+removeFile(dbname)
+
+let createWriter = avroFileWriterCreate(dbname.cstring, personSchema, db.addr)
+err = avroStrerror()
+echo err
+# let toJson = avroSchemaToJson(personSchema, db)
+echo "here"
+
+# addPerson(personSchema, db, "Emil".cstring, "Ivanichkov".cstring,
+#           "088655555".cstring, 22)
+
