@@ -3,9 +3,10 @@
 CFLAGS=-Wall $(shell pkg-config --cflags --libs rdkafka glib-2.0 )
 CPPFLAGS := $(subst strict-dwarf,,$(CPPFLAGS))
 NIMFLAGS := $(shell pkg-config --libs rdkafka)
+SERDESFLAGS :=$(shell pkg-config --libs serdes)
 
-NIMLIBS := $(shell pkg-config --libs rdkafka)
-NIMINCLUDES := $(shell pkg-config --cflags-only-I rdkafka)
+NIMLIBS := $(shell pkg-config --libs rdkafka serdes)
+NIMINCLUDES := $(shell pkg-config --cflags-only-I rdkafka serdes)
 
 producer:
 	gcc src/producer.c -o build/producer $(CFLAGS)
@@ -37,3 +38,6 @@ nimavro:
 avro_example_nim:
 	make nimavro
 	nim --verbosity:2 -o:build/avro_example_nim cpp src/avro_example.nim
+
+nimserdes:
+	nim --passL:"$(NIMFLAGS)" --passC:"$(NIMINCLUDES)" -o:build/nimserdes  --verbosity:2 c libs/nim_serdes/nimserdes.nim
