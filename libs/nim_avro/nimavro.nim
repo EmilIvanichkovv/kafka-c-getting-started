@@ -145,13 +145,14 @@ proc avroWriterReset*(writer: AvroWriterT) {.cdecl, importc: "avro_writer_reset"
 proc avroSchemaToJson*(schema: AvroSchemaT; `out`: AvroWriterT): cint {.cdecl,
     importc: "avro_schema_to_json", dynlib: avrodll.}
 
-
 type
   AvroFileReaderT* = object
   AvroFileWriterT* = object
+  PAvroFileWriterT* = ptr AvroFileWriterT
+
 
 proc avroFileWriterCreate*(path: cstring; schema: AvroSchemaT;
-                          writer: ptr AvroFileWriterT): cint {.cdecl,
+                          writer: ptr PAvroFileWriterT): cint {.cdecl,
     importc: "avro_file_writer_create", dynlib: avrodll.}
 
 proc avroFileWriterCreateWithCodec*(path: cstring; schema: AvroSchemaT;
@@ -162,12 +163,15 @@ proc avroFileWriterCreateWithCodec*(path: cstring; schema: AvroSchemaT;
 proc avroFileWriterSync*(writer: AvroFileWriterT): cint {.cdecl,
     importc: "avro_file_writer_sync", dynlib: avrodll.}
 
-proc avroFileWriterAppendValue*(writer: AvroFileWriterT; src: ptr AvroValueT): cint {.
+proc avroFileWriterAppendValue*(writer: PAvroFileWriterT; src: ptr AvroValueT): cint {.
     cdecl, importc: "avro_file_writer_append_value", dynlib: avrodll.}
 
 proc avroFileWriterOpen*(path: cstring; writer: ptr AvroFileWriterT): cint {.cdecl,
     importc: "avro_file_writer_open", dynlib: avrodll.}
 
+
+proc avroFileWriterFlush*(writer: PAvroFileWriterT): cint {.cdecl,
+    importc: "avro_file_writer_flush", dynlib: avrodll.}
 
 
 # Generic
