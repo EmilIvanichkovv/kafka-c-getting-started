@@ -1,6 +1,6 @@
 const
   serdesdll* =  "libserdes.so"
-  hrr = "serdes-avro.h"
+  hrr = "libserdes/serdes.h"
 
 import ../nim_avro/nimavro
 
@@ -34,24 +34,34 @@ proc serdesSchemaSerializeAvro*(schema: ptr SerdesSchemaT,
                                errstrSize: int): SerdesErrT
   {.cdecl, importc: "serdes_schema_serialize_avro", dynlib: serdesdll.}
 
-proc serdesConfNew*(errsrt: cstring, errstrSize: int, things: varargs[cstring]): PSerdesConfT
-  {.cdecl, importc: "serdes_conf_new", dynlib: serdesdll.}
+proc serdesConfNew*(errstr: cstring; errstrSize: int): ptr SerdesConfT {.varargs,
+    cdecl, importc: "serdes_conf_new", dynlib: serdesdll.}
 
-proc serdesSchemaGet*(sd: PSerdesT, name:cstring, id: int,
-                     errsrt: cstring, errstrSize: int): PSerdesSchemaT
-  {.cdecl, importc: "serdes_schema_get", dynlib: serdesdll.}
+# proc serdesConfSet*(sconf: PSerdesConfT, name: cstring, val: cstring,
+#                     errstr: cstring, errstrSize: int)
+#   {.cdecl, importc: "serdes_conf_set", dynlib: serdesdll.}
 
-proc serdesSchemaAdd*(sd: PSerdesT, name:cstring, id: int,
-                     definition: cstring, definitionLen: int,
-                     errsrt: cstring, errstrSize: int): ptr SerdesSchemaT
-  {.cdecl, importc: "serdes_schema_add", dynlib: serdesdll.}
+proc serdesConfSet*(sconf: ptr SerdesConfT; name: cstring; val: cstring;
+                   errstr: cstring; errstrSize: int): SerdesErrT {.cdecl,
+    importc: "serdes_conf_set", dynlib: serdesdll.}
+
+proc serdesSchemaGet*(sd: ptr SerdesT; name: cstring; id: int; errstr: cstring;
+                     errstrSize: int): ptr SerdesSchemaT {.cdecl,
+    importc: "serdes_schema_get", dynlib: serdesdll.}
+
+proc serdesSchemaAdd*(sd: ptr SerdesT; name: cstring; id: int; definition: pointer;
+                     definitionLen: int; errstr: cstring; errstrSize: int): ptr SerdesSchemaT {.
+    cdecl, importc: "serdes_schema_add", dynlib: serdesdll.}
 
 proc serdesSchemaId*(schema: ptr SerdesSchemaT): int
   {.cdecl, importc: "serdes_schema_id", dynlib: serdesdll.}
 
-proc serdesSchemaName*(schema: ptr SerdesSchemaT): cstring
-  {.cdecl, importc: "serdes_schema_name", dynlib: serdesdll.}
+proc serdesSchemaName*(schema: ptr SerdesSchemaT): cstring {.cdecl,
+    importc: "serdes_schema_name", dynlib: serdesdll.}
 
-proc serdesNew*(conf: PSerdesConfT, errsrt: cstring, errstrSize: int): PSerdesT
-  {.cdecl, importc: "serdes_new", dynlib: serdesdll.}
+proc serdesSchemaDefinition*(schema: ptr SerdesSchemaT): cstring {.cdecl,
+    importc: "serdes_schema_definition", dynlib: serdesdll.}
+
+proc serdesNew*(conf: ptr SerdesConfT; errstr: cstring; errstrSize: int): ptr SerdesT {.
+    cdecl, importc: "serdes_new", dynlib: serdesdll.}
 
