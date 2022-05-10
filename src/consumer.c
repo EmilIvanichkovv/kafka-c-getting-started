@@ -1,6 +1,16 @@
 #include <glib.h>
 #include <librdkafka/rdkafka.h>
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <signal.h>
+
+
+/* Typical include path is <libserdes/serdes.h> */
+#include <libserdes/serdes-avro.h>
+
+
 #include "common.c"
 
 static volatile sig_atomic_t run = 1;
@@ -12,10 +22,69 @@ static void stop(int sig) {
     run = 0;
 }
 
+// static int run = 1;
+static int exit_eof = 0;
+static int verbosity = 2;
+
+static void parse_msg (rd_kafka_message_t *rkmessage, serdes_t *serdes) {
+        avro_value_t avro;
+        serdes_err_t err;
+        serdes_schema_t *schema;
+        char errstr[512];
+        char *as_json;
+
+        /* Automatic deserialization using message framing */
+        err = serdes_deserialize_avro(serdes, &avro, &schema,
+                                      rkmessage->payload, rkmessage->len,
+                                      errstr, sizeof(errstr));
+        if (err) {
+                fprintf(stderr, "%% serdes_deserialize_avro failed: %s\n",
+                        errstr);
+                return;
+        }
+
+        if (verbosity > 1)
+                fprintf(stderr,
+                        "%% Successful Avro deserialization using "
+                        "schema %s id %d\n",
+                        serdes_schema_name(schema), serdes_schema_id(schema));
+
+        /* Convert to JSON and print */
+        if (avro_value_to_json(&avro, 1, &as_json))
+                fprintf(stderr, "%% avro_to_json failed: %s\n",
+                        avro_strerror());
+        else {
+                printf("%s\n", as_json);
+                free(as_json);
+        }
+
+        avro_value_decref(&avro);
+}
+
 int main (int argc, char **argv) {
     rd_kafka_t *consumer;
     rd_kafka_conf_t *conf;
     rd_kafka_resp_err_t err;
+
+    int partition = 0;
+    char mode = 0;
+    rd_kafka_conf_t *rk_conf;
+    rd_kafka_topic_conf_t *rkt_conf;
+    serdes_conf_t *sconf;
+    serdes_t *serdes;
+    // serdes_err_t err;
+    char errstr2[512];
+    int opt;
+    int schema_id = -1;
+    const char *schema_name = NULL;
+    const char *schema_def = NULL;
+
+    sconf = serdes_conf_new(NULL, 0,
+                            /* Default URL */
+                            "schema.registry.url", "http://localhost:8081",
+                            NULL);
+    serdes = serdes_new(sconf, errstr2, sizeof(errstr2));
+
     char errstr[512];
 
     // Parse the command line.
@@ -90,6 +159,7 @@ int main (int argc, char **argv) {
                 return 1;
             }
         } else {
+            parse_msg(consumer_message, serdes);
             g_message("Consumed event from topic %s: key = %.*s value = %s",
                       rd_kafka_topic_name(consumer_message->rkt),
                       (int)consumer_message->key_len,
