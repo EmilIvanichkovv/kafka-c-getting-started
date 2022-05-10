@@ -1,3 +1,5 @@
+import system/io
+
 const
   avrodll* =  "libavro.so"
   hrr = "avro/value.h"
@@ -35,8 +37,8 @@ type
 # Data
 
 type
-  AvroWrappedBufferT* = object
-  AvroWrappedBuffer* {.bycopy.} = object
+  # AvroWrappedBufferT* = object
+  AvroWrappedBufferT* {.bycopy.} = object
     buf*: pointer
     size*: int
     userData*: pointer
@@ -48,13 +50,13 @@ type
 # Errors
 proc avroStrerror*(): string
   {.cdecl, importc: "avro_strerror", dynlib: avrodll.}
+
 # Value
 
 type
   AvroValueT* {.bycopy.} = object
     iface*:ptr AvroValueIfaceT
     self*: pointer
-
 
   AvroValueIfaceT* {.bycopy.} = object
     increfIface*: proc (iface: ptr AvroValueIfaceT): ptr AvroValueIfaceT {.cdecl.}
@@ -63,13 +65,13 @@ type
     decref*: proc (value: ptr AvroValueT) {.cdecl.}
     reset*: proc (iface: ptr AvroValueIfaceT; self: pointer): cint {.cdecl.}
     getType*: proc (iface: ptr AvroValueIfaceT; self: pointer): AvroTypeT {.cdecl.}
-    getSchema*: proc (iface: ptr AvroValueIfaceT; self: pointer): AvroSchemaT {.cdecl.}
+    get_schema*: proc (iface: ptr AvroValueIfaceT; self: pointer): AvroSchemaT {.cdecl.}
     getBoolean*: proc (iface: ptr AvroValueIfaceT; self: pointer; `out`: ptr cint): cint {.
         cdecl.}
     getBytes*: proc (iface: ptr AvroValueIfaceT; self: pointer; buf: ptr pointer;
                    size: ptr int): cint {.cdecl.}
-    grabBytes*: proc (iface: ptr AvroValueIfaceT; self: pointer;
-                    dest: ptr AvroWrappedBufferT): cint {.cdecl.}
+    grab_bytes*: proc (iface: ptr AvroValueIfaceT; self: pointer;
+                    dest: ptr AvroWrappedBufferT): int {.cdecl.}
     getDouble*: proc (iface: ptr AvroValueIfaceT; self: pointer; `out`: ptr cdouble): cint {.
         cdecl.}
     getFloat*: proc (iface: ptr AvroValueIfaceT; self: pointer; `out`: ptr cfloat): cint {.
@@ -79,7 +81,7 @@ type
     getLong*: proc (iface: ptr AvroValueIfaceT; self: pointer; `out`: ptr int64): cint {.
         cdecl.}
     getNull*: proc (iface: ptr AvroValueIfaceT; self: pointer): cint {.cdecl.}
-    getString*: proc (iface: ptr AvroValueIfaceT; self: pointer; str: cstringArray;
+    get_string*: proc (iface: ptr AvroValueIfaceT; self: pointer; str: cstringArray;
                     size: ptr int): cint {.cdecl.}
     grabString*: proc (iface: ptr AvroValueIfaceT; self: pointer;
                      dest: ptr AvroWrappedBufferT): cint {.cdecl.}
@@ -94,7 +96,7 @@ type
                    size: int): cint {.cdecl.}
     giveBytes*: proc (iface: ptr AvroValueIfaceT; self: pointer;
                     buf: ptr AvroWrappedBufferT): cint {.cdecl.}
-    setDouble*: proc (iface: ptr AvroValueIfaceT; self: pointer; val: cdouble): cint {.
+    set_double*: proc (iface: ptr AvroValueIfaceT; self: pointer; val: cdouble): cint {.
         cdecl.}
     setFloat*: proc (iface: ptr AvroValueIfaceT; self: pointer; val: cfloat): cint {.cdecl.}
     setInt*: proc (iface: ptr AvroValueIfaceT; self: pointer; val: int32): cint {.cdecl.}
@@ -115,7 +117,7 @@ type
         cdecl.}
     getByIndex*: proc (iface: ptr AvroValueIfaceT; self: pointer; index: int;
                      child: ptr AvroValueT; name: cstringArray): cint {.cdecl.}
-    getByName*: proc (iface: ptr AvroValueIfaceT; self: pointer; name: cstring;
+    get_by_name*: proc (iface: ptr AvroValueIfaceT; self: pointer; name: cstring;
                     child: ptr AvroValueT; index: ptr int): cint {.cdecl.}
     getDiscriminant*: proc (iface: ptr AvroValueIfaceT; self: pointer; `out`: ptr cint): cint {.
         cdecl.}
@@ -127,6 +129,29 @@ type
               child: ptr AvroValueT; index: ptr int; isNew: ptr cint): cint {.cdecl.}
     setBranch*: proc (iface: ptr AvroValueIfaceT; self: pointer; discriminant: cint;
                     branch: ptr AvroValueT): cint {.cdecl.}
+
+proc avroValueToJson*(value: ptr AvroValueT, oneLine: int, jsonStr: ptr cstring):int
+  {.cdecl, importc: "avro_value_to_json", dynlib: avrodll.}
+
+proc avroValueIncref*(value: ptr AvroValueT) {.cdecl, importc: "avro_value_incref",
+    dynlib: avrodll.}
+
+# Macros from value.h
+proc avroValueGrabBytes*(value: ptr AvroValueT, dest: ptr AvroWrappedBufferT): int
+  {. header:"avro/value.h" importc: "avro_value_grab_bytes".}
+
+proc avroValueSetDouble*(value: ptr AvroValueT, src: float): int
+  {. header:"avro/value.h" importc: "avro_value_set_double".}
+
+proc avroValueGetByName*(value: ptr AvroValueT, name: cstring,
+                         child: ptr AvroValueT, index: int): int
+  {. header:"avro/value.h" importc: "avro_value_get_by_name".}
+
+proc avroValueGetString*(value: ptr AvroValueT, dest: ptr cstring, size: int): int
+  {. header:"avro/value.h" importc: "avro_value_get_string".}
+
+proc avroValueGetSchema*(value: ptr AvroValueT): int
+  {. header:"avro/value.h" importc: "avro_value_get_schema".}
 
 # IO
 type
@@ -145,6 +170,16 @@ proc avroWriterReset*(writer: AvroWriterT) {.cdecl, importc: "avro_writer_reset"
 proc avroSchemaToJson*(schema: AvroSchemaT; `out`: AvroWriterT): cint {.cdecl,
     importc: "avro_schema_to_json", dynlib: avrodll.}
 
+proc avroWriterMemory*(buf: cstring; len: int64): AvroWriterT {.cdecl,
+    importc: "avro_writer_memory", dynlib: avrodll.}
+
+proc avroWriterDump*(writer: AvroWriterT; fp: ptr File) {.cdecl,
+    importc: "avro_writer_dump", dynlib: avrodll.}
+
+
+proc avroValueWrite*(writer: AvroWriterT; src: ptr AvroValueT): int {.cdecl,
+    importc: "avro_value_write", dynlib: avrodll.}
+
 type
   AvroFileReaderT* = object
   AvroFileWriterT* = object
@@ -162,6 +197,9 @@ proc avroFileWriterCreateWithCodec*(path: cstring; schema: AvroSchemaT;
 
 proc avroFileWriterSync*(writer: AvroFileWriterT): cint {.cdecl,
     importc: "avro_file_writer_sync", dynlib: avrodll.}
+
+proc avroFileReaderReadValue*(reader: AvroFileReaderT; dest: ptr AvroValueT): cint {.
+    cdecl, importc: "avro_file_reader_read_value", dynlib: avrodll.}
 
 proc avroFileWriterAppendValue*(writer: PAvroFileWriterT; src: ptr AvroValueT): cint {.
     cdecl, importc: "avro_file_writer_append_value", dynlib: avrodll.}
