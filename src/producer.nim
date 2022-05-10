@@ -59,11 +59,13 @@ echo producerErr.cStr
 let produceRes = producer.produce(topic,
                                   -1,
                                   2,
-                                  test.unsafeAddr, 200,
+                                  nil, 200,
                                   nil, 0,
                                   0,
                                   nil,
                                   nil)
+
+
 let flushRes = producer.flush(500)
 echo flushRes
 
@@ -76,71 +78,107 @@ echo "FROM NOW ON WE EXPERIMENT WITH AVRO"
 echo ""
 
 var
-  sconf: PSerdesConfT
-  serdes: PSerdesT
+  sconf: ptr SerdesConfT
+  serdes: ptr SerdesT
   err: SerdesErrT
   schemaName: cstring
   schemaDef: cstring
   errstr: cstring
-  errstrSize: int = 80
-  serBuff: pointer = addr(errstrSize)
-  serBuffSize: int
+  errstrSize: int = 500
+  serBuff: pointer
+  serBuff2: pointer
 
-sconf = serdesConfNew("".cstring, 0,
-                      "schema.registry.url".cstring, "http://localhost:9092".cstring,
-                      "".cstring);
+  serBuffSize: int = 5000
+
+sconf = serdesConfNew(nil, 0, nil)
+echo serdesConfSet(sconf, "schema.registry.url".cstring, "http://localhost:8081".cstring,
+                   errstr, errstrSize)
+
+
+echo "I am srconf " , repr(sconf)
 
 serdes = serdesNew(sconf, errstr, errstr.len)
 
-echo repr(serdes.addr)
+echo "I am serdes " , repr(serdes)
 
-let schema = serdesSchemaGet(serdes, "Person".cstring, -1,
-                            #  "", -1,
-                             errstr, errstr.len)
-echo errstr.len
-# echo schema.serdesSchemaName
 
 var
   personSchema = initPersonSchema()
-  person = addPerson(personSchema, "Emil".cstring, "Ivanichkov".cstring,
-            "088655555".cstring, 22)
+  person = addPerson(personSchema, "Emil".string, "Ivannichkov".string,
+            "088655555".string, 22)
+  person2 = addPerson(personSchema, "mil".string, "Ivannichkov".string,
+            "088655555".string, 22)
+
+
+var jsonStr: cstring
+var buff: AvroWrappedBufferT
+echo avroValueToJson(person.addr, 0, jsonStr.addr)
+
+# echo avroValueGetSchema(person.addr)
 
 var schema1: SerdesSchemaT
 
-let schema11 = serdesSchemaAdd(serdes, "Person".cstring, -1,
-                             "", -1,
+let schema11 = serdesSchemaAdd(serdes, "Persons".cstring, -1,
+                             PERSON_SCHEMA.cstring, PERSON_SCHEMA.len,
                              errstr, errstr.len)
-# schema1 = schema11[]
-echo repr(schema11)
 
-echo schema1.addr.serdesSchemaName
-# echo schema1.addr.serdesSchemaId
-
-
-# let schema112 = serdesSchemaAdd(serdes, "Person".cstring, -1,
-#                              "", -1,
+# let schema11 = serdesSchemaGet(serdes, "Person".cstring, -1,
 #                              errstr, errstr.len)
-
-# echo schema1.addr.serdesSchemaName
-# echo schema1.addr.serdesSchemaId
+echo errstr
 
 var errstr1: cstring = ""
+var errstr2: cstring = ""
+
 
 var id_value: AvroValueT
 echo avroGenericStringNew(id_value.addr, "HII")
 
 
-echo repr(schema1.unsafeAddr)
+echo "I am schema " , repr(schema11)
+
+echo schema11.serdesSchemaName
+echo schema11.serdesSchemaDefinition
+
 # echo repr(person.unsafeAddr)
 # echo repr(serBuff.unsafeAddr)
 # echo repr(serBuffSize.unsafeAddr)
 # echo repr(errstr1.unsafeAddr)
-
-# echo id_value.addr.isNil
-echo serdesSchemaSerializeAvro(schema1.addr,
-                               id_value.addr,
+echo serdesSchemaSerializeAvro(schema11,
+                               person.addr,
                                serBuff.addr,
                                serBuffSize.addr,
                                errstr1,
                                errstr1.len)
 
+let produceRes2 = producer.produce(topic,
+                                  -1,
+                                  2,
+                                  serBuff, 34,
+                                  nil, 0,
+                                  0,
+                                  nil,
+                                  nil)
+
+echo serdesSchemaSerializeAvro(schema11,
+                               person2.addr,
+                               serBuff2.addr,
+                               serBuffSize.addr,
+                               errstr2,
+                               errstr2.len)
+
+let produceRes3 = producer.produce(topic,
+                                  -1,
+                                  2,
+                                  serBuff2, 34,
+                                  nil, 0,
+                                  0,
+                                  nil,
+                                  nil)
+echo serBuffSize
+
+
+
+let flushRes2 = producer.flush(500)
+echo flushRes2
+
+echo produceRes2
