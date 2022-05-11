@@ -1,6 +1,6 @@
 # .ALL: src/producer src/consumer
 
-CFLAGS=-Wall $(shell pkg-config --cflags --libs rdkafka glib-2.0 )
+CFLAGS=-Wall $(shell pkg-config --cflags --libs rdkafka glib-2.0 serdes )
 CPPFLAGS := $(subst strict-dwarf,,$(CPPFLAGS))
 NIMFLAGS := $(shell pkg-config --libs rdkafka)
 SERDESFLAGS :=$(shell pkg-config --libs serdes)
@@ -15,7 +15,7 @@ producer_cpp:
 	g++ src/producer.cpp -o build/producer_cpp -l:librdkafka++.so $(CFLAGS) $(CPPFLAGS)
 
 consumer:
-	gcc src/consumer.c -o build/consumer $(CFLAGS)
+	gcc src/consumer.c -o build/consumer $(CFLAGS) -I/nix/store/v6cl3vv8a8x9fn80n9d9xrbalnhld8g8-avro-c-1.11.0/include -L/nix/store/v6cl3vv8a8x9fn80n9d9xrbalnhld8g8-avro-c-1.11.0/lib -lavro
 
 nimkafka_cpp:
 	nim  -o:build/nimkafka  --verbosity:2 cpp libs/nim_kafka/nimkafka.nim
