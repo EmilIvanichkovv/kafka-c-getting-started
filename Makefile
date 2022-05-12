@@ -24,7 +24,6 @@ nimkafka_c:
 	nim --passL:"$(NIMFLAGS)" --passC:"$(NIMINCLUDES)" -o:build/nimkafka_c  --verbosity:2 c libs/nim_kafka/nimkafka_c.nim
 
 producer_nim:
-	make nimkafka_cpp
 	nim --verbosity:2 -o:build/producer_nim cpp src/producer.nim
 
 avro-example_c:

@@ -1,5 +1,4 @@
 import ../libs/nim_avro/nimavro
-import ../libs/nim_serdes/nimserdes
 import std/os
 
 let PERSON_SCHEMA* =
@@ -22,12 +21,6 @@ var idCounter:int64
 var
   testObj: AvroObjT
   testSchema = testObj.addr
-
-# let jsonSchema = avroSchemaFromJsonLength(PERSON_SCHEMA.cstring, PERSON_SCHEMA.len-1, testSchema.addr)
-# echo jsonSchema
-# err = avroStrerror()
-# echo err
-
 
 proc initPersonSchema*(): AvroSchema_t =
     var res: int
@@ -115,7 +108,6 @@ proc addPersonToDB*(schema: AvroSchemaT,
 
 
 var personSchema = initPersonSchema();
-echo avroSchemaRecordSize(personSchema)
 var
   db: PAvroFileWriterT
   dbname = "test.db"
@@ -127,9 +119,7 @@ removeFile(dbname)
 
 let createWriter = avroFileWriterCreate(dbname.cstring, personSchema, db.addr)
 err = avroStrerror()
-echo err
 # let toJson = avroSchemaToJson(personSchema, db)
-echo "here"
 for i in 0..2:
   addPersonToDB(personSchema, db, "Emil".cstring, "Ivanichkov".cstring,
             "088655555".cstring, 22)
@@ -141,59 +131,3 @@ for i in 0..2:
             "0".cstring, 22)
 
 err = avroStrerror()
-echo err
-echo db.avroFileWriterFlush
-
-var
-  person = addPerson(personSchema, "Emil".cstring, "Ivanichkov".cstring,
-            "088655555".cstring, 22)
-
-var jsonStr: cstring
-var buff: AvroWrappedBufferT
-echo repr(person)
-echo avroValueToJson(person.addr, 0, jsonStr.addr)
-# echo person.iface.grab_bytes(person.iface, person.self, buff.addr)
-# echo buff
-# echo buff.size
-# echo buff
-
-
-var
-  doubleSchema = avroSchemaDouble()
-  doubleIface = avroGenericClassFromSchema(doubleSchema)
-  doubleVal: AvroValueT
-
-discard avroGenericValueNew(doubleIface, doubleVal.addr)
-echo avroValueSetDouble(doubleVal.addr, 80)
-
-echo avroValueToJson(doubleVal.addr, 0, jsonStr.addr)
-echo jsonStr
-
-var
-  writer: AvroWriterT
-  buffForWriter: cstring
-echo repr(writer)
-
-writer.avroWriterReset
-echo avroValueWrite(writer, doubleVal.addr)
-err = avroStrerror()
-echo err
-echo repr(writer)
-
-let fileName = "testFile.txt"
-let openFile = open(fileName, fmReadWrite, 5000)
-writer.avroWriterDump(openFile.unsafeAddr)
-
-var
-  lastName: AvroValueT
-  buffLastName: cstring
-
-echo avroValueGetByName(person.addr, "Last", lastName.addr, 0)
-echo avroValueGetString(lastName.addr, buffLastName.addr, buffLastName.len)
-echo buffLastName
-
-echo repr(lastName)
-
-echo lastName
-
-let schema = avroValueGetSchema(person.addr)

@@ -1,184 +1,93 @@
 import
 
-  ../libs/nim_kafka/nimkafka,
+  # ../libs/nim_kafka/nimkafka,
   ../libs/nim_kafka/nimkafka_c,
   ../libs/nim_avro/nimavro,
   ../libs/nim_serdes/nimserdes,
 
   ./avro_example
 
-import cppstl
 
-
-var a: ptr Conf
-var conf = create(ConfType.CONF_GLOBAL)
-
+#  Init Kafka Producer
+# broker
 let
-  name = "bootstrap.servers".initCppString
-  broker = "localhost:9092".initCppString
-var str = initCppString()
+  name = "bootstrap.servers".cstring
+  broker = "localhost:9092".cstring
+var errstr: cstring= ""
 
-type
-  testObj = object
-    name: string
-    age: int
+let conf = rd_kafka_conf_new()
+let confRes = conf.rdKafkaConfSet(name, broker, errstr, 512)
 
-var jon = testObj(name: "Jon", age: 21)
-echo jon
-let res = set(conf, name, broker, str)
-echo $res
-echo str.cStr
+let producer = rd_kafka_new(RdKafkaTypeT.RD_KAFKA_PRODUCER, conf, errstr, 512)
 
-# Try to use dump
-let dumpRes = conf.dump
-echo dumpRes[].begin[]
-echo dumpRes[].size
+# topic
+let
+  topicConf = rd_kafka_topic_conf_new()
+  topicName:cstring = "purchases"
+  topic = rd_kafka_topic_new(producer, topicName, topicConf)
+  part:int32 = 0
 
-proc printConf(confDump: List[CppString]) =
-  var it = confDump.begin()
-  for i in 0 ..< confDump.size() div 2:
-    echo it[] , "= ".initCppString , it.next()[]
-    it = it.next()
-    it = it.next()
-
-dumpRes[].printConf
-let topic = "purchases".initCppString
-var message:cstring = "MESSAGE"
-
-var producerErr = initCppString()
-let producer = create(conf, producerErr)
-
-type
-  TestObj = object
-    name: string
-    age: int
-
-let test = TestObj(name: "Emil", age: 22)
-
-echo producerErr.cStr
-let produceRes = producer.produce(topic,
-                                  -1,
-                                  2,
-                                  nil, 200,
-                                  nil, 0,
-                                  0,
-                                  nil,
-                                  nil)
-
-
-let flushRes = producer.flush(500)
-echo flushRes
-
-echo produceRes
-
-echo rd_kafka_version_cpp()
-
-# Avro --------------------------------------------------------------
-echo "FROM NOW ON WE EXPERIMENT WITH AVRO"
-echo ""
-
+# Set Avro
 var
   sconf: ptr SerdesConfT
   serdes: ptr SerdesT
-  err: SerdesErrT
-  schemaName: cstring
+  schema: ptr SerdesSchemaT
+  schemaName: cstring = "Person"
   schemaDef: cstring
-  errstr: cstring
-  errstrSize: int = 500
+  errstrSize: int = 512
   serBuff: pointer
-  serBuff2: pointer
 
   serBuffSize: int = 5000
 
 sconf = serdesConfNew(nil, 0, nil)
-echo serdesConfSet(sconf, "schema.registry.url".cstring, "http://localhost:8081".cstring,
+discard serdesConfSet(sconf, "schema.registry.url".cstring, "http://localhost:8081".cstring,
                    errstr, errstrSize)
 
-
-echo "I am srconf " , repr(sconf)
-
 serdes = serdesNew(sconf, errstr, errstr.len)
-
-echo "I am serdes " , repr(serdes)
-
+schema = serdesSchemaGet(serdes, schemaName, -1,
+                              errstr, errstr.len)
+if schema.isNil:
+  schema = serdesSchemaAdd(serdes, schemaName, -1,
+                           PERSON_SCHEMA.cstring, PERSON_SCHEMA.len,
+                           errstr, errstr.len)
+# serdesSchemaDestroy(schema1)
 
 var
   personSchema = initPersonSchema()
   person = addPerson(personSchema, "Emil".string, "Ivannichkov".string,
             "088655555".string, 22)
-  person2 = addPerson(personSchema, "mil".string, "Ivannichkov".string,
-            "088655555".string, 22)
+  person2 = addPerson(personSchema, "Evgeni".string, "Dankov".string,
+            "000000000".string, 22)
 
+echo schema.serdesSchemaName
+echo schema.serdesSchemaDefinition
 
-var jsonStr: cstring
-var buff: AvroWrappedBufferT
-echo avroValueToJson(person.addr, 0, jsonStr.addr)
-
-# echo avroValueGetSchema(person.addr)
-
-var schema1: SerdesSchemaT
-
-let schema11 = serdesSchemaAdd(serdes, "Persons".cstring, -1,
-                             PERSON_SCHEMA.cstring, PERSON_SCHEMA.len,
-                             errstr, errstr.len)
-
-# let schema11 = serdesSchemaGet(serdes, "Person".cstring, -1,
-#                              errstr, errstr.len)
-echo errstr
-
-var errstr1: cstring = ""
-var errstr2: cstring = ""
-
-
-var id_value: AvroValueT
-echo avroGenericStringNew(id_value.addr, "HII")
-
-
-echo "I am schema " , repr(schema11)
-
-echo schema11.serdesSchemaName
-echo schema11.serdesSchemaDefinition
-
-# echo repr(person.unsafeAddr)
-# echo repr(serBuff.unsafeAddr)
-# echo repr(serBuffSize.unsafeAddr)
-# echo repr(errstr1.unsafeAddr)
-echo serdesSchemaSerializeAvro(schema11,
+echo serdesSchemaSerializeAvro(schema,
                                person.addr,
                                serBuff.addr,
                                serBuffSize.addr,
-                               errstr1,
-                               errstr1.len)
+                               errstr,
+                               errstr.len)
 
-let produceRes2 = producer.produce(topic,
-                                  -1,
-                                  2,
-                                  serBuff, 34,
-                                  nil, 0,
-                                  0,
-                                  nil,
-                                  nil)
+let produceRes2 = rd_kafka_produce(topic,
+                                   part,
+                                   cast[cint](RD_KAFKA_MSG_F_COPY),
+                                   serBuff,
+                                   serBuffSize,
+                                   nil,0,nil)
 
-echo serdesSchemaSerializeAvro(schema11,
+echo serdesSchemaSerializeAvro(schema,
                                person2.addr,
-                               serBuff2.addr,
+                               serBuff.addr,
                                serBuffSize.addr,
-                               errstr2,
-                               errstr2.len)
+                               errstr,
+                               errstr.len)
 
-let produceRes3 = producer.produce(topic,
-                                  -1,
-                                  2,
-                                  serBuff2, 34,
-                                  nil, 0,
-                                  0,
-                                  nil,
-                                  nil)
-echo serBuffSize
+let produceRes3 = rd_kafka_produce(topic,
+                                   part,
+                                   cast[cint](RD_KAFKA_MSG_F_COPY),
+                                   serBuff,
+                                   serBuffSize,
+                                   nil,0,nil)
 
-
-
-let flushRes2 = producer.flush(500)
-echo flushRes2
-
-echo produceRes2
+discard rd_kafka_flush(producer, 10*1000)

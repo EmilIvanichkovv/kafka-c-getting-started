@@ -45,6 +45,9 @@ proc serdesConfSet*(sconf: ptr SerdesConfT; name: cstring; val: cstring;
                    errstr: cstring; errstrSize: int): SerdesErrT {.cdecl,
     importc: "serdes_conf_set", dynlib: serdesdll.}
 
+proc serdesSchemaDestroy*(ss: ptr SerdesSchemaT) {.cdecl,
+    importc: "serdes_schema_destroy", dynlib: serdesdll.}
+
 proc serdesSchemaGet*(sd: ptr SerdesT; name: cstring; id: int; errstr: cstring;
                      errstrSize: int): ptr SerdesSchemaT {.cdecl,
     importc: "serdes_schema_get", dynlib: serdesdll.}
