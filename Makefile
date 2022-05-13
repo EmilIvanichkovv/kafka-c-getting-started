@@ -34,8 +34,10 @@ nimavro:
 	 --passC:"-I/nix/store/v6cl3vv8a8x9fn80n9d9xrbalnhld8g8-avro-c-1.11.0/include"\
 	  -o:build/nimavro  --verbosity:2 cpp libs/nim_avro/nimavro.nim
 
+avro_helpers:
+	nim --verbosity:2 -o:build/avro_helpers cpp src/avro_helpers.nim
+
 avro_example_nim:
-	make nimavro
 	nim --verbosity:2 -o:build/avro_example_nim cpp src/avro_example.nim
 
 nimserdes:

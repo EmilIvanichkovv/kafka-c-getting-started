@@ -32,6 +32,12 @@ type
     classType*: AvroClassT
     refcount*: int
 
+  AvroRawArrayT* {.bycopy.} = object
+    elementSize*: csize_t
+    elementCount*: csize_t
+    allocatedSize*: csize_t
+    data*: pointer
+
   AvroSchemaT* = ptr AvroObjT
   PAvroSchemaT* = ptr AvroSchemaT
 # Data
@@ -100,9 +106,9 @@ type
         cdecl.}
     setFloat*: proc (iface: ptr AvroValueIfaceT; self: pointer; val: cfloat): cint {.cdecl.}
     setInt*: proc (iface: ptr AvroValueIfaceT; self: pointer; val: int32): cint {.cdecl.}
-    setLong*: proc (iface: ptr AvroValueIfaceT; self: pointer; val: int64): cint {.cdecl.}
+    set_long*: proc (iface: ptr AvroValueIfaceT; self: pointer; val: int64): cint {.cdecl.}
     setNull*: proc (iface: ptr AvroValueIfaceT; self: pointer): cint {.cdecl.}
-    setString*: proc (iface: ptr AvroValueIfaceT; self: pointer; str: cstring): cint {.
+    set_string*: proc (iface: ptr AvroValueIfaceT; self: pointer; str: cstring): cint {.
         cdecl.}
     setStringLen*: proc (iface: ptr AvroValueIfaceT; self: pointer; str: cstring;
                        size: int): cint {.cdecl.}
@@ -140,8 +146,14 @@ proc avroValueIncref*(value: ptr AvroValueT) {.cdecl, importc: "avro_value_incre
 proc avroValueGrabBytes*(value: ptr AvroValueT, dest: ptr AvroWrappedBufferT): int
   {. header:"avro/value.h" importc: "avro_value_grab_bytes".}
 
+proc avroValueSetLong*(value: ptr AvroValueT, src: int64): int
+  {. header:"avro/value.h" importc: "avro_value_set_long".}
+
 proc avroValueSetDouble*(value: ptr AvroValueT, src: float): int
   {. header:"avro/value.h" importc: "avro_value_set_double".}
+
+proc avroValueSetString*(value: ptr AvroValueT, src: cstring): int
+  {. header:"avro/value.h" importc: "avro_value_set_string".}
 
 proc avroValueGetByName*(value: ptr AvroValueT, name: cstring,
                          child: ptr AvroValueT, index: int): int
@@ -152,6 +164,13 @@ proc avroValueGetString*(value: ptr AvroValueT, dest: ptr cstring, size: int): i
 
 proc avroValueGetSchema*(value: ptr AvroValueT): int
   {. header:"avro/value.h" importc: "avro_value_get_schema".}
+
+proc avroValueAppend*(value: ptr AvroValueT, child: ptr AvroValueT, newIndex: ptr int): int
+  {. header:"avro/value.h" importc: "avro_value_append".}
+
+# Data
+proc avroRawArrayInit*(array: ptr AvroRawArrayT; elementSize: int) {.cdecl,
+    importc: "avro_raw_array_init", dynlib: avrodll.}
 
 # IO
 type
@@ -262,6 +281,12 @@ proc avroSchemaBoolean*(): AvroSchemaT{.
 
 proc avroSchemaNull*(): AvroSchemaT{.
   cdecl, importc: "avro_schema_null", dynlib: avrodll.}
+
+proc avroSchemaArray*(items: AvroSchemaT): AvroSchemaT {.cdecl,
+    importc: "avro_schema_array", dynlib: avrodll.}
+
+proc avroSchemaArrayItems*(array: AvroSchemaT): AvroSchemaT {.cdecl,
+    importc: "avro_schema_array_items", dynlib: avrodll.}
 
 proc avroSchemaRecord*(name: cstring; space: cstring): AvroSchemaT{.
   cdecl, importc: "avro_schema_record", dynlib: avrodll.}
