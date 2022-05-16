@@ -1,5 +1,8 @@
 import ../libs/nim_avro/nimavro
 import std/os
+import
+  ./validator_rewards_monitor_avro_helpers,
+  ./avro_helpers
 
 let PERSON_SCHEMA* =
   """
@@ -12,11 +15,45 @@ let PERSON_SCHEMA* =
          {"name": "Phone", "type": "string"},
          {"name": "Age", "type": "int"}]}
   """
-let otherChema =  "{\"type\":\"record\","&
-                    "\"name\":\"myrecord\","&
-                    "\"fields\":[{\"name\":\"f1\",\"type\":\"string\"}]}"
-var err: string
+let VRM_SCHEMA* =
+  """
+{
+  "type" : "record",
+  "name" : "VRM",
+  "namespace" : "com.test.avro",
+  "fields" : [ {
+    "name" : "source_vote_results",
+    "type" : {
+      "type" : "array",
+      "items" : "long"
+    }
+  }, {
+    "name" : "inclusion_delays",
+    "type" : {
+      "type" : "array",
+      "items" : "long"
+    }
+  } ]
+}
+  """
+# let NULL_OR_LONG* =  """
+# {
+#   "type": "record",
+#   "name": "nullOrLong",
+#   "fields" : [
+#     { "name": "value", "type": "long" , "default": null }
+#   ]
+# }
+# """
 var idCounter:int64
+var err: string
+
+
+# var testSchemaJ: AvroSchemaT = avro_schema_long()
+
+
+
+
 
 var
   testObj: AvroObjT
@@ -38,7 +75,6 @@ proc initPersonSchema*(): AvroSchema_t =
     res = avro_schema_record_field_append(personSchema, "Phone", phoneNumber)
     res = avro_schema_record_field_append(personSchema, "Age", age)
     personSchema
-
 
 proc addPerson*(schema: AvroSchemaT,
                first, last, phone: cstring,
@@ -107,6 +143,7 @@ proc addPersonToDB*(schema: AvroSchemaT,
   res = avroFileWriterAppendValue(db, person.addr)
 
 
+
 var personSchema = initPersonSchema();
 var
   db: PAvroFileWriterT
@@ -116,6 +153,7 @@ var
   first_value: AvroValueT
 
 removeFile(dbname)
+
 
 let createWriter = avroFileWriterCreate(dbname.cstring, personSchema, db.addr)
 err = avroStrerror()

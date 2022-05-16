@@ -107,7 +107,7 @@ type
     setFloat*: proc (iface: ptr AvroValueIfaceT; self: pointer; val: cfloat): cint {.cdecl.}
     setInt*: proc (iface: ptr AvroValueIfaceT; self: pointer; val: int32): cint {.cdecl.}
     set_long*: proc (iface: ptr AvroValueIfaceT; self: pointer; val: int64): cint {.cdecl.}
-    setNull*: proc (iface: ptr AvroValueIfaceT; self: pointer): cint {.cdecl.}
+    set_null*: proc (iface: ptr AvroValueIfaceT; self: pointer): cint {.cdecl.}
     set_string*: proc (iface: ptr AvroValueIfaceT; self: pointer; str: cstring): cint {.
         cdecl.}
     setStringLen*: proc (iface: ptr AvroValueIfaceT; self: pointer; str: cstring;
@@ -143,8 +143,12 @@ proc avroValueIncref*(value: ptr AvroValueT) {.cdecl, importc: "avro_value_incre
     dynlib: avrodll.}
 
 # Macros from value.h
+
 proc avroValueGrabBytes*(value: ptr AvroValueT, dest: ptr AvroWrappedBufferT): int
   {. header:"avro/value.h" importc: "avro_value_grab_bytes".}
+
+proc avroValueSetNull*(value: ptr AvroValueT): int
+  {. header:"avro/value.h" importc: "avro_value_set_null".}
 
 proc avroValueSetLong*(value: ptr AvroValueT, src: int64): int
   {. header:"avro/value.h" importc: "avro_value_set_long".}
@@ -195,6 +199,8 @@ proc avroWriterMemory*(buf: cstring; len: int64): AvroWriterT {.cdecl,
 proc avroWriterDump*(writer: AvroWriterT; fp: ptr File) {.cdecl,
     importc: "avro_writer_dump", dynlib: avrodll.}
 
+proc avroSchemaUnion*(): AvroSchemaT {.cdecl, importc: "avro_schema_union",
+                                    dynlib: avrodll.}
 
 proc avroValueWrite*(writer: AvroWriterT; src: ptr AvroValueT): int {.cdecl,
     importc: "avro_value_write", dynlib: avrodll.}
@@ -258,6 +264,9 @@ proc avroGenericStringNewLength*(value: ptr AvroValueT; val: cstring; size: int)
     cdecl, importc: "avro_generic_string_new_length", dynlib: avrodll.}
 
 # Schemas
+type
+  AvroSchemaErrorT = object
+
 proc avroSchemaString*(): AvroSchemaT{.
   cdecl, importc: "avro_schema_string", dynlib: avrodll.}
 
@@ -311,8 +320,15 @@ proc avroSchemaRecordFieldAppend*(record: AvroSchemaT;
 proc avroSchemaRecordSize*(record: AvroSchemaT): int {.cdecl,
     importc: "avro_schema_record_size", dynlib: avrodll.}
 
+proc avroSchemaFromJson*(jsontext: cstring; unused1: int32; schema: ptr AvroSchemaT;
+                        unused2: ptr AvroSchemaErrorT): cint {.cdecl,
+    importc: "avro_schema_from_json", dynlib: avrodll.}
+
 proc avroSchemaFromJsonLength*(jsontext: cstring; length: int;
                               schema: ptr AvroSchemaT): cint {.cdecl,
     importc: "avro_schema_from_json_length", dynlib: avrodll.}
 # proc avro_schema_record_size*(schema: AvroSchemaT):int
 #   {.cdecl, importc: "avro_schema_record_size", dynlib: avrodll.}
+
+proc avroSchemaToSpecific*(schema: AvroSchemaT; prefix: cstring): int {.cdecl,
+    importc: "avro_schema_to_specific", dynlib: avrodll.}

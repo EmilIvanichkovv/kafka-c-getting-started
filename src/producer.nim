@@ -1,11 +1,13 @@
 import
+  std/options,
 
   # ../libs/nim_kafka/nimkafka,
   ../libs/nim_kafka/nimkafka_c,
   ../libs/nim_avro/nimavro,
   ../libs/nim_serdes/nimserdes,
 
-  ./avro_example
+  ./avro_example,
+  ./validator_rewards_monitor_avro_helpers
 
 
 #  Init Kafka Producer
@@ -44,46 +46,70 @@ discard serdesConfSet(sconf, "schema.registry.url".cstring, "http://localhost:80
                    errstr, errstrSize)
 
 serdes = serdesNew(sconf, errstr, errstr.len)
-schema = serdesSchemaGet(serdes, schemaName, -1,
-                              errstr, errstr.len)
-if schema.isNil:
-  schema = serdesSchemaAdd(serdes, schemaName, -1,
-                           PERSON_SCHEMA.cstring, PERSON_SCHEMA.len,
-                           errstr, errstr.len)
+# schema = serdesSchemaGet(serdes, schemaName, -1,
+#                               errstr, errstr.len)
+# if schema.isNil:
+#   schema = serdesSchemaAdd(serdes, schemaName, -1,
+#                            PERSON_SCHEMA.cstring, PERSON_SCHEMA.len,
+#                            errstr, errstr.len)
 # serdesSchemaDestroy(schema1)
 
+# var
+#   personSchema = initPersonSchema()
+#   person = addPerson(personSchema, "Emil".string, "Ivannichkov".string,
+#             "088655555".string, 22)
+#   person2 = addPerson(personSchema, "Evgeni".string, "Dankov".string,
+#             "000000000".string, 22)
+
+# echo schema.serdesSchemaName
+# echo schema.serdesSchemaDefinition
+
+# echo serdesSchemaSerializeAvro(schema,
+#                                person.addr,
+#                                serBuff.addr,
+#                                serBuffSize.addr,
+#                                errstr,
+#                                errstr.len)
+
+# let produceRes2 = rd_kafka_produce(topic,
+#                                    part,
+#                                    cast[cint](RD_KAFKA_MSG_F_COPY),
+#                                    serBuff,
+#                                    serBuffSize,
+#                                    nil,0,nil)
+
+# echo serdesSchemaSerializeAvro(schema,
+#                                person2.addr,
+#                                serBuff.addr,
+#                                serBuffSize.addr,
+#                                errstr,
+#                                errstr.len)
+
+# let produceRes3 = rd_kafka_produce(topic,
+#                                    part,
+#                                    cast[cint](RD_KAFKA_MSG_F_COPY),
+#                                    serBuff,
+#                                    serBuffSize,
+#                                    nil,0,nil)
+
+discard rd_kafka_flush(producer, 10*1000)
+
 var
-  personSchema = initPersonSchema()
-  person = addPerson(personSchema, "Emil".string, "Ivannichkov".string,
-            "088655555".string, 22)
-  person2 = addPerson(personSchema, "Evgeni".string, "Dankov".string,
-            "000000000".string, 22)
+  vrm = Testing()
+  jsonRepr: cstring
 
-echo schema.serdesSchemaName
-echo schema.serdesSchemaDefinition
-
-echo serdesSchemaSerializeAvro(schema,
-                               person.addr,
+let vrmSchema = serdesSchemaAdd(serdes, "vrmSchema".cstring, -1,
+                                VRM_SCHEMA.cstring, VRM_SCHEMA.len,
+                                errstr, errstr.len)
+echo repr(vrmSchema)
+echo serdesSchemaSerializeAvro(vrmSchema,
+                               vrm.addr,
                                serBuff.addr,
                                serBuffSize.addr,
                                errstr,
                                errstr.len)
 
-let produceRes2 = rd_kafka_produce(topic,
-                                   part,
-                                   cast[cint](RD_KAFKA_MSG_F_COPY),
-                                   serBuff,
-                                   serBuffSize,
-                                   nil,0,nil)
-
-echo serdesSchemaSerializeAvro(schema,
-                               person2.addr,
-                               serBuff.addr,
-                               serBuffSize.addr,
-                               errstr,
-                               errstr.len)
-
-let produceRes3 = rd_kafka_produce(topic,
+let produceRes4 = rd_kafka_produce(topic,
                                    part,
                                    cast[cint](RD_KAFKA_MSG_F_COPY),
                                    serBuff,
@@ -91,3 +117,5 @@ let produceRes3 = rd_kafka_produce(topic,
                                    nil,0,nil)
 
 discard rd_kafka_flush(producer, 10*1000)
+let a = none(uint64)
+echo $a
