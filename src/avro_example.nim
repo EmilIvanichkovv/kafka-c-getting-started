@@ -17,24 +17,100 @@ let PERSON_SCHEMA* =
   """
 let VRM_SCHEMA* =
   """
-{
+  {
   "type" : "record",
-  "name" : "VRM",
-  "namespace" : "com.test.avro",
-  "fields" : [ {
+  "name" : "MyClass",
+  "fields" : [{
     "name" : "source_vote_results",
     "type" : {
       "type" : "array",
       "items" : "long"
     }
   }, {
+    "name" : "max_source_vote_results",
+    "type" : {
+      "type" : "array",
+      "items" : "long"
+    }
+  },
+  {
+    "name" : "target_vote_results",
+    "type" : {
+      "type" : "array",
+      "items" : "long"
+    }
+  }, {
+    "name" : "max_target_vote_results",
+    "type" : {
+      "type" : "array",
+      "items" : "long"
+    }
+  },{
+    "name" : "head_vote_results",
+    "type" : {
+      "type" : "array",
+      "items" : "long"
+    }
+  }, {
+    "name" : "max_head_vote_results",
+    "type" : {
+      "type" : "array",
+      "items" : "long"
+    }
+  },
+  {
     "name" : "inclusion_delays",
     "type" : {
       "type" : "array",
       "items" : "long"
     }
-  } ]
-}
+  }, {
+    "name" : "inclusion_delay_results",
+    "type" : {
+      "type" : "array",
+      "items" : "long"
+    }
+  },
+  {
+    "name" : "max_inclusion_delay_results",
+    "type" : {
+      "type" : "array",
+      "items" : "long"
+    }
+  }, {
+    "name" : "sync_committee_results",
+    "type" : {
+      "type" : "array",
+      "items" : "long"
+    }
+  },{
+    "name" : "max_sync_committee_results",
+    "type" : {
+      "type" : "array",
+      "items" : "long"
+    }
+  }, {
+    "name" : "block_proposal_results",
+    "type" : {
+      "type" : "array",
+      "items" : "long"
+    }
+  },
+  {
+    "name" : "inactivity_leak_results",
+    "type" : {
+      "type" : "array",
+      "items" : "long"
+    }
+  }, {
+    "name" : "slashing_results",
+    "type" : {
+      "type" : "array",
+      "items" : "long"
+    }
+  }
+  ]
+  }
   """
 # let NULL_OR_LONG* =  """
 # {
