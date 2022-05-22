@@ -139,3 +139,13 @@ proc rdKafkaProduce*(rkt: ptr RdKafkaTopicT,
                      keylen: int,
                      msgOpaque: pointer): int {.cdecl, importc: "rd_kafka_produce",
   dynlib: rdkafkadll.}
+
+# Offset management
+proc rdKafkaQueryWatermarkOffsets*(rk: ptr RdKafkaT; topic: cstring;
+                                  partition: int; lowOffset: ptr int64;
+                                  highOffset: ptr int64; timeoutMs: cint): RdKafkaRespErrT {.
+    cdecl, importc: "rd_kafka_query_watermark_offsets", dynlib: rdkafkadll.}
+
+proc rdKafkaGetWatermarkOffsets*(rk: ptr RdKafkaT; topic: cstring; partition: int;
+                                lowOffset: ptr int64; highOffset: ptr int64): RdKafkaRespErrT {.
+    cdecl, importc: "rd_kafka_get_watermark_offsets", dynlib: rdkafkadll.}
