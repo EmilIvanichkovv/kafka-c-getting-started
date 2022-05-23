@@ -13,6 +13,7 @@ mkShell {
     pkg-config
     rdkafka
     avro-c
+    zlib
     libserdes
     glib
   ];

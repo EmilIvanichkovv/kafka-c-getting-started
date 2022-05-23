@@ -4,6 +4,8 @@ const
   avrodll* =  "libavro.so"
   hrr = "avro/value.h"
 
+import system/io
+
 # Basics
 type
   AvroTypeT* = enum
@@ -40,10 +42,9 @@ type
 
   AvroSchemaT* = ptr AvroObjT
   PAvroSchemaT* = ptr AvroSchemaT
-# Data
 
+# Data
 type
-  # AvroWrappedBufferT* = object
   AvroWrappedBufferT* {.bycopy.} = object
     buf*: pointer
     size*: int
@@ -53,87 +54,87 @@ type
                offset: int; length: int): cint {.cdecl.}
     slice*: proc (self: ptr AvroWrappedBufferT; offset: int; length: int): cint {.
         cdecl.}
+
 # Errors
 proc avroStrerror*(): string
   {.cdecl, importc: "avro_strerror", dynlib: avrodll.}
 
 # Value
-
 type
   AvroValueT* {.bycopy.} = object
     iface*:ptr AvroValueIfaceT
     self*: pointer
 
   AvroValueIfaceT* {.bycopy.} = object
-    increfIface*: proc (iface: ptr AvroValueIfaceT): ptr AvroValueIfaceT {.cdecl.}
-    decrefIface*: proc (iface: ptr AvroValueIfaceT) {.cdecl.}
+    incref_iface*: proc (iface: ptr AvroValueIfaceT): ptr AvroValueIfaceT {.cdecl.}
+    decref_iface*: proc (iface: ptr AvroValueIfaceT) {.cdecl.}
     incref*: proc (value: ptr AvroValueT) {.cdecl.}
     decref*: proc (value: ptr AvroValueT) {.cdecl.}
     reset*: proc (iface: ptr AvroValueIfaceT; self: pointer): cint {.cdecl.}
-    getType*: proc (iface: ptr AvroValueIfaceT; self: pointer): AvroTypeT {.cdecl.}
+    get_type*: proc (iface: ptr AvroValueIfaceT; self: pointer): AvroTypeT {.cdecl.}
     get_schema*: proc (iface: ptr AvroValueIfaceT; self: pointer): AvroSchemaT {.cdecl.}
-    getBoolean*: proc (iface: ptr AvroValueIfaceT; self: pointer; `out`: ptr cint): cint {.
+    get_boolean*: proc (iface: ptr AvroValueIfaceT; self: pointer; `out`: ptr cint): cint {.
         cdecl.}
-    getBytes*: proc (iface: ptr AvroValueIfaceT; self: pointer; buf: ptr pointer;
+    get_bytes*: proc (iface: ptr AvroValueIfaceT; self: pointer; buf: ptr pointer;
                    size: ptr int): cint {.cdecl.}
     grab_bytes*: proc (iface: ptr AvroValueIfaceT; self: pointer;
                     dest: ptr AvroWrappedBufferT): int {.cdecl.}
-    getDouble*: proc (iface: ptr AvroValueIfaceT; self: pointer; `out`: ptr cdouble): cint {.
+    get_double*: proc (iface: ptr AvroValueIfaceT; self: pointer; `out`: ptr cdouble): cint {.
         cdecl.}
-    getFloat*: proc (iface: ptr AvroValueIfaceT; self: pointer; `out`: ptr cfloat): cint {.
+    get_float*: proc (iface: ptr AvroValueIfaceT; self: pointer; `out`: ptr cfloat): cint {.
         cdecl.}
-    getInt*: proc (iface: ptr AvroValueIfaceT; self: pointer; `out`: ptr int32): cint {.
+    get_int*: proc (iface: ptr AvroValueIfaceT; self: pointer; `out`: ptr int32): cint {.
         cdecl.}
-    getLong*: proc (iface: ptr AvroValueIfaceT; self: pointer; `out`: ptr int64): cint {.
+    get_long*: proc (iface: ptr AvroValueIfaceT; self: pointer; `out`: ptr int64): cint {.
         cdecl.}
-    getNull*: proc (iface: ptr AvroValueIfaceT; self: pointer): cint {.cdecl.}
+    get_null*: proc (iface: ptr AvroValueIfaceT; self: pointer): cint {.cdecl.}
     get_string*: proc (iface: ptr AvroValueIfaceT; self: pointer; str: cstringArray;
                     size: ptr int): cint {.cdecl.}
-    grabString*: proc (iface: ptr AvroValueIfaceT; self: pointer;
+    grab_string*: proc (iface: ptr AvroValueIfaceT; self: pointer;
                      dest: ptr AvroWrappedBufferT): cint {.cdecl.}
-    getEnum*: proc (iface: ptr AvroValueIfaceT; self: pointer; `out`: ptr cint): cint {.
+    get_enum*: proc (iface: ptr AvroValueIfaceT; self: pointer; `out`: ptr cint): cint {.
         cdecl.}
-    getFixed*: proc (iface: ptr AvroValueIfaceT; self: pointer; buf: ptr pointer;
+    get_fixed*: proc (iface: ptr AvroValueIfaceT; self: pointer; buf: ptr pointer;
                    size: ptr int): cint {.cdecl.}
-    grabFixed*: proc (iface: ptr AvroValueIfaceT; self: pointer;
+    grab_fixed*: proc (iface: ptr AvroValueIfaceT; self: pointer;
                     dest: ptr AvroWrappedBufferT): cint {.cdecl.}
-    setBoolean*: proc (iface: ptr AvroValueIfaceT; self: pointer; val: cint): cint {.cdecl.}
-    setBytes*: proc (iface: ptr AvroValueIfaceT; self: pointer; buf: pointer;
+    set_boolean*: proc (iface: ptr AvroValueIfaceT; self: pointer; val: cint): cint {.cdecl.}
+    set_bytes*: proc (iface: ptr AvroValueIfaceT; self: pointer; buf: pointer;
                    size: int): cint {.cdecl.}
-    giveBytes*: proc (iface: ptr AvroValueIfaceT; self: pointer;
+    give_bytes*: proc (iface: ptr AvroValueIfaceT; self: pointer;
                     buf: ptr AvroWrappedBufferT): cint {.cdecl.}
     set_double*: proc (iface: ptr AvroValueIfaceT; self: pointer; val: cdouble): cint {.
         cdecl.}
-    setFloat*: proc (iface: ptr AvroValueIfaceT; self: pointer; val: cfloat): cint {.cdecl.}
-    setInt*: proc (iface: ptr AvroValueIfaceT; self: pointer; val: int32): cint {.cdecl.}
+    set_float*: proc (iface: ptr AvroValueIfaceT; self: pointer; val: cfloat): cint {.cdecl.}
+    set_int*: proc (iface: ptr AvroValueIfaceT; self: pointer; val: int32): cint {.cdecl.}
     set_long*: proc (iface: ptr AvroValueIfaceT; self: pointer; val: int64): cint {.cdecl.}
     setNull*: proc (iface: ptr AvroValueIfaceT; self: pointer): cint {.cdecl.}
     set_string*: proc (iface: ptr AvroValueIfaceT; self: pointer; str: cstring): cint {.
         cdecl.}
-    setStringLen*: proc (iface: ptr AvroValueIfaceT; self: pointer; str: cstring;
+    set_string_len*: proc (iface: ptr AvroValueIfaceT; self: pointer; str: cstring;
                        size: int): cint {.cdecl.}
-    giveStringLen*: proc (iface: ptr AvroValueIfaceT; self: pointer;
+    give_string_len*: proc (iface: ptr AvroValueIfaceT; self: pointer;
                         buf: ptr AvroWrappedBufferT): cint {.cdecl.}
-    setEnum*: proc (iface: ptr AvroValueIfaceT; self: pointer; val: cint): cint {.cdecl.}
-    setFixed*: proc (iface: ptr AvroValueIfaceT; self: pointer; buf: pointer;
+    set_enum*: proc (iface: ptr AvroValueIfaceT; self: pointer; val: cint): cint {.cdecl.}
+    set_fixed*: proc (iface: ptr AvroValueIfaceT; self: pointer; buf: pointer;
                    size: int): cint {.cdecl.}
-    giveFixed*: proc (iface: ptr AvroValueIfaceT; self: pointer;
+    give_fixed*: proc (iface: ptr AvroValueIfaceT; self: pointer;
                     buf: ptr AvroWrappedBufferT): cint {.cdecl.}
-    getSize*: proc (iface: ptr AvroValueIfaceT; self: pointer; size: ptr int): cint {.
+    get_size*: proc (iface: ptr AvroValueIfaceT; self: pointer; size: ptr int): cint {.
         cdecl.}
-    getByIndex*: proc (iface: ptr AvroValueIfaceT; self: pointer; index: int;
+    get_by_index*: proc (iface: ptr AvroValueIfaceT; self: pointer; index: int;
                      child: ptr AvroValueT; name: cstringArray): cint {.cdecl.}
     get_by_name*: proc (iface: ptr AvroValueIfaceT; self: pointer; name: cstring;
                     child: ptr AvroValueT; index: ptr int): cint {.cdecl.}
-    getDiscriminant*: proc (iface: ptr AvroValueIfaceT; self: pointer; `out`: ptr cint): cint {.
+    get_discriminant*: proc (iface: ptr AvroValueIfaceT; self: pointer; `out`: ptr cint): cint {.
         cdecl.}
-    getCurrentBranch*: proc (iface: ptr AvroValueIfaceT; self: pointer;
+    get_current_branch*: proc (iface: ptr AvroValueIfaceT; self: pointer;
                            branch: ptr AvroValueT): cint {.cdecl.}
     append*: proc (iface: ptr AvroValueIfaceT; self: pointer; childOut: ptr AvroValueT;
                  newIndex: ptr int): cint {.cdecl.}
     add*: proc (iface: ptr AvroValueIfaceT; self: pointer; key: cstring;
               child: ptr AvroValueT; index: ptr int; isNew: ptr cint): cint {.cdecl.}
-    setBranch*: proc (iface: ptr AvroValueIfaceT; self: pointer; discriminant: cint;
+    set_branch*: proc (iface: ptr AvroValueIfaceT; self: pointer; discriminant: cint;
                     branch: ptr AvroValueT): cint {.cdecl.}
 
 proc avroValueToJson*(value: ptr AvroValueT, oneLine: int, jsonStr: ptr cstring):int
@@ -204,7 +205,6 @@ type
   AvroFileWriterT* = object
   PAvroFileWriterT* = ptr AvroFileWriterT
 
-
 proc avroFileWriterCreate*(path: cstring; schema: AvroSchemaT;
                           writer: ptr PAvroFileWriterT): cint {.cdecl,
     importc: "avro_file_writer_create", dynlib: avrodll.}
@@ -229,7 +229,6 @@ proc avroFileWriterOpen*(path: cstring; writer: ptr AvroFileWriterT): cint {.cde
 
 proc avroFileWriterFlush*(writer: PAvroFileWriterT): cint {.cdecl,
     importc: "avro_file_writer_flush", dynlib: avrodll.}
-
 
 # Generic
 proc avroGenericClassFromSchema*(schema: AvroSchemaT): ptr AvroValueIfaceT {.cdecl,
@@ -314,5 +313,6 @@ proc avroSchemaRecordSize*(record: AvroSchemaT): int {.cdecl,
 proc avroSchemaFromJsonLength*(jsontext: cstring; length: int;
                               schema: ptr AvroSchemaT): cint {.cdecl,
     importc: "avro_schema_from_json_length", dynlib: avrodll.}
-# proc avro_schema_record_size*(schema: AvroSchemaT):int
-#   {.cdecl, importc: "avro_schema_record_size", dynlib: avrodll.}
+
+proc avroSchemaToSpecific*(schema: AvroSchemaT; prefix: cstring): int {.cdecl,
+    importc: "avro_schema_to_specific", dynlib: avrodll.}

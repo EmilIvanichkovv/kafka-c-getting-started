@@ -1,5 +1,5 @@
 const
-  serdesdll* =  "libserdes.so"
+  serdesdll =  "libserdes.so"
   hrr = "libserdes/serdes.h"
 
 import ../nim_avro/nimavro
@@ -36,10 +36,6 @@ proc serdesSchemaSerializeAvro*(schema: ptr SerdesSchemaT,
 
 proc serdesConfNew*(errstr: cstring; errstrSize: int): ptr SerdesConfT {.varargs,
     cdecl, importc: "serdes_conf_new", dynlib: serdesdll.}
-
-# proc serdesConfSet*(sconf: PSerdesConfT, name: cstring, val: cstring,
-#                     errstr: cstring, errstrSize: int)
-#   {.cdecl, importc: "serdes_conf_set", dynlib: serdesdll.}
 
 proc serdesConfSet*(sconf: ptr SerdesConfT; name: cstring; val: cstring;
                    errstr: cstring; errstrSize: int): SerdesErrT {.cdecl,

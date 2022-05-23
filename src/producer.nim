@@ -14,15 +14,28 @@ let
   name = "bootstrap.servers".cstring
   broker = "localhost:9092".cstring
 var errstr: cstring= ""
+var errstr3: cstring= ""
+
 
 let conf = rd_kafka_conf_new()
 let confRes = conf.rdKafkaConfSet(name, broker, errstr, 512)
+let confRes2 = conf.rdKafkaConfSet("message.max.bytes", "1000000000", errstr, 512);
+let confRes3 = conf.rdKafkaConfSet("compression.type", "snappy", errstr, 512);
+
 
 let producer = rd_kafka_new(RdKafkaTypeT.RD_KAFKA_PRODUCER, conf, errstr, 512)
 
 # topic
 let
   topicConf = rd_kafka_topic_conf_new()
+  resTopicSet = topicConf.rdKafkaTopicConfSet("compression.codec".cstring, "snappy".cstring, errstr, 512)
+  resTopicSet2 = topicConf.rdKafkaTopicConfSet("compression.type".cstring, "snappy".cstring, errstr, 512)
+  resTopicSet3 = topicConf.rdKafkaTopicConfSet("compression.level".cstring, "12".cstring, errstr, 512)
+
+echo repr(topicConf)
+let
+  # resTopicSet = topicConf.rdKafkaTopicConfSet("message.copy.max.bytes".cstring, "1000000000".cstring,
+  #                                              errstr3, 512)
   topicName:cstring = "purchases"
   topic = rd_kafka_topic_new(producer, topicName, topicConf)
   part:int32 = 0
@@ -91,3 +104,10 @@ let produceRes3 = rd_kafka_produce(topic,
                                    nil,0,nil)
 
 discard rd_kafka_flush(producer, 10*1000)
+
+var
+  lowOffset: int64
+  highOffset: int64
+echo rdKafkaQueryWatermarkOffsets(producer, topicName, part, lowOffset.addr, highOffset.addr, 1)
+echo lowOffset
+echo highOffset
