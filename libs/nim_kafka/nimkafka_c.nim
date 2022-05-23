@@ -59,8 +59,10 @@ type
     RD_KAFKA_RESP_ERR_NODE_UPDATE = - 182, # Broker node update
     RD_KAFKA_RESP_ERR_END = - 100, # end internal error codes
                                 # Standard Kafka errors:
-    RD_KAFKA_RESP_ERR_UNKNOWN = - 1, RD_KAFKA_RESP_ERR_NO_ERROR = 0,
-    RD_KAFKA_RESP_ERR_OFFSET_OUT_OF_RANGE = 1, RD_KAFKA_RESP_ERR_INVALID_MSG = 2,
+    RD_KAFKA_RESP_ERR_UNKNOWN = - 1,
+    RD_KAFKA_RESP_ERR_NO_ERROR = 0,
+    RD_KAFKA_RESP_ERR_OFFSET_OUT_OF_RANGE = 1,
+    RD_KAFKA_RESP_ERR_INVALID_MSG = 2,
     RD_KAFKA_RESP_ERR_UNKNOWN_TOPIC_OR_PART = 3,
     RD_KAFKA_RESP_ERR_INVALID_MSG_SIZE = 4,
     RD_KAFKA_RESP_ERR_LEADER_NOT_AVAILABLE = 5,
@@ -74,6 +76,9 @@ type
     RD_KAFKA_RESP_ERR_OFFSETS_LOAD_IN_PROGRESS = 14,
     RD_KAFKA_RESP_ERR_CONSUMER_COORDINATOR_NOT_AVAILABLE = 15,
     RD_KAFKA_RESP_ERR_NOT_COORDINATOR_FOR_CONSUMER = 16
+
+proc rdKafkaLastError*(): RdKafkaRespErrT {.cdecl, importc: "rd_kafka_last_error",
+    dynlib: rdkafkadll.}
 
 #  Main configuration property interface
 proc rdKafkaConfNew*(): ptr RdKafkaConfT {.cdecl, importc: "rd_kafka_conf_new",
@@ -129,7 +134,7 @@ proc rdKafkaTopicConfSet*(conf: ptr RdKafkaTopicConfT,
                           errstrSize: int): RdKafkaConfResT {.
   cdecl, importc: "rd_kafka_topic_conf_set", dynlib: rdkafkadll.}
 
-# Produced API
+# Producer API
 proc rdKafkaProduce*(rkt: ptr RdKafkaTopicT,
                      partition: int32,
                      msgflags: int,
@@ -142,10 +147,10 @@ proc rdKafkaProduce*(rkt: ptr RdKafkaTopicT,
 
 # Offset management
 proc rdKafkaQueryWatermarkOffsets*(rk: ptr RdKafkaT; topic: cstring;
-                                  partition: int; lowOffset: ptr int64;
+                                  partition: int32; lowOffset: ptr int64;
                                   highOffset: ptr int64; timeoutMs: cint): RdKafkaRespErrT {.
     cdecl, importc: "rd_kafka_query_watermark_offsets", dynlib: rdkafkadll.}
 
-proc rdKafkaGetWatermarkOffsets*(rk: ptr RdKafkaT; topic: cstring; partition: int;
+proc rdKafkaGetWatermarkOffsets*(rk: ptr RdKafkaT; topic: cstring; partition: int32;
                                 lowOffset: ptr int64; highOffset: ptr int64): RdKafkaRespErrT {.
     cdecl, importc: "rd_kafka_get_watermark_offsets", dynlib: rdkafkadll.}
