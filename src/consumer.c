@@ -121,7 +121,7 @@ int main (int argc, char **argv) {
     conf = NULL;
 
     // Convert the list of topics to a format suitable for librdkafka.
-    const char *topic = "purchases";
+    const char *topic = "testTopic";
     rd_kafka_topic_partition_list_t *subscription = rd_kafka_topic_partition_list_new(1);
     rd_kafka_topic_partition_list_add(subscription, topic, RD_KAFKA_PARTITION_UA);
 

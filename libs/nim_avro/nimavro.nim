@@ -1,10 +1,8 @@
 import system/io
 
 const
-  avrodll* =  "libavro.so"
+  avrodll* = "libavro.so"
   hrr = "avro/value.h"
-
-import system/io
 
 # Basics
 type
@@ -108,7 +106,7 @@ type
     set_float*: proc (iface: ptr AvroValueIfaceT; self: pointer; val: cfloat): cint {.cdecl.}
     set_int*: proc (iface: ptr AvroValueIfaceT; self: pointer; val: int32): cint {.cdecl.}
     set_long*: proc (iface: ptr AvroValueIfaceT; self: pointer; val: int64): cint {.cdecl.}
-    setNull*: proc (iface: ptr AvroValueIfaceT; self: pointer): cint {.cdecl.}
+    set_null*: proc (iface: ptr AvroValueIfaceT; self: pointer): cint {.cdecl.}
     set_string*: proc (iface: ptr AvroValueIfaceT; self: pointer; str: cstring): cint {.
         cdecl.}
     set_string_len*: proc (iface: ptr AvroValueIfaceT; self: pointer; str: cstring;
@@ -137,15 +135,24 @@ type
     set_branch*: proc (iface: ptr AvroValueIfaceT; self: pointer; discriminant: cint;
                     branch: ptr AvroValueT): cint {.cdecl.}
 
-proc avroValueToJson*(value: ptr AvroValueT, oneLine: int, jsonStr: ptr cstring):int
-  {.cdecl, importc: "avro_value_to_json", dynlib: avrodll.}
-
 proc avroValueIncref*(value: ptr AvroValueT) {.cdecl, importc: "avro_value_incref",
     dynlib: avrodll.}
 
+proc avroValueDecref*(value: ptr AvroValueT) {.cdecl, importc: "avro_value_decref",
+    dynlib: avrodll.}
+
+proc avroValueToJson*(value: ptr AvroValueT, oneLine: int, jsonStr: ptr cstring):int
+  {.cdecl, importc: "avro_value_to_json", dynlib: avrodll.}
+
 # Macros from value.h
+proc avroValueReset*(value: ptr AvroValueT): int
+  {. header:"avro/value.h" importc: "avro_value_reset".}
+
 proc avroValueGrabBytes*(value: ptr AvroValueT, dest: ptr AvroWrappedBufferT): int
   {. header:"avro/value.h" importc: "avro_value_grab_bytes".}
+
+proc avroValueSetNull*(value: ptr AvroValueT): int
+  {. header:"avro/value.h" importc: "avro_value_set_null".}
 
 proc avroValueSetLong*(value: ptr AvroValueT, src: int64): int
   {. header:"avro/value.h" importc: "avro_value_set_long".}
@@ -178,6 +185,9 @@ type
   AvroReaderT* = object
   AvroWriterT* = object
 
+proc avroSchemaToJson*(schema: AvroSchemaT; `out`: AvroWriterT): cint {.cdecl,
+    importc: "avro_schema_to_json", dynlib: avrodll.}
+
 proc avroWriterFlush*(writer: AvroWriterT) {.cdecl, importc: "avro_writer_flush",
     dynlib: avrodll.}
 
@@ -187,18 +197,23 @@ proc avroWriterFree*(writer: AvroWriterT) {.cdecl, importc: "avro_writer_free",
 proc avroWriterReset*(writer: AvroWriterT) {.cdecl, importc: "avro_writer_reset",
     dynlib: avrodll.}
 
-proc avroSchemaToJson*(schema: AvroSchemaT; `out`: AvroWriterT): cint {.cdecl,
-    importc: "avro_schema_to_json", dynlib: avrodll.}
-
 proc avroWriterMemory*(buf: cstring; len: int64): AvroWriterT {.cdecl,
     importc: "avro_writer_memory", dynlib: avrodll.}
+
+proc avroWriterTell*(writer: AvroWriterT): int64 {.cdecl,
+    importc: "avro_writer_tell", dynlib: avrodll.}
 
 proc avroWriterDump*(writer: AvroWriterT; fp: ptr File) {.cdecl,
     importc: "avro_writer_dump", dynlib: avrodll.}
 
+proc avroSchemaUnion*(): AvroSchemaT {.cdecl, importc: "avro_schema_union",
+                                    dynlib: avrodll.}
 
 proc avroValueWrite*(writer: AvroWriterT; src: ptr AvroValueT): int {.cdecl,
     importc: "avro_value_write", dynlib: avrodll.}
+
+proc avroValueSizeof*(src: ptr AvroValueT; size: ptr csize_t): cint {.cdecl,
+    importc: "avro_value_sizeof", dynlib: avrodll.}
 
 type
   AvroFileReaderT* = object
@@ -257,6 +272,9 @@ proc avroGenericStringNewLength*(value: ptr AvroValueT; val: cstring; size: int)
     cdecl, importc: "avro_generic_string_new_length", dynlib: avrodll.}
 
 # Schemas
+type
+  AvroSchemaErrorT = object
+
 proc avroSchemaString*(): AvroSchemaT{.
   cdecl, importc: "avro_schema_string", dynlib: avrodll.}
 
@@ -309,6 +327,10 @@ proc avroSchemaRecordFieldAppend*(record: AvroSchemaT;
 
 proc avroSchemaRecordSize*(record: AvroSchemaT): int {.cdecl,
     importc: "avro_schema_record_size", dynlib: avrodll.}
+
+proc avroSchemaFromJson*(jsontext: cstring; unused1: int32; schema: ptr AvroSchemaT;
+                        unused2: ptr AvroSchemaErrorT): cint {.cdecl,
+    importc: "avro_schema_from_json", dynlib: avrodll.}
 
 proc avroSchemaFromJsonLength*(jsontext: cstring; length: int;
                               schema: ptr AvroSchemaT): cint {.cdecl,

@@ -1,7 +1,9 @@
 import ../libs/nim_avro/nimavro
+import ../libs/nim_serdes/nimserdes
+
+
 import std/os
 import std/sequtils
-
 
 var foo: AvroValueT
 discard foo.iface.decref == nil
@@ -45,3 +47,12 @@ proc fillAvroValueFromObject*(obj: object, avroV: ptr AvroValueT) =
   for name, value in obj.fieldPairs:
     if avroValueGetByName(avroV, name, avroArr.addr, 0 ) == 0:
       fillAvroArray(value, avroArr.addr)
+
+proc createAvroValueKey*(schemaKey: ptr SerdesSchemaT): AvroValueT =
+  var
+    keyAvroValue: AvroValueT
+    keyClass = avroGenericClassFromSchema(avroSchemaLong())
+    keyRes = avroGenericValueNew(keyClass, keyAvroValue.addr)
+
+  discard avroValueSetLong(keyAvroValue.addr, 5.int64)
+  keyAvroValue

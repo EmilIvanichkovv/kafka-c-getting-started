@@ -29,7 +29,7 @@ type
 proc serdesSchemaSerializeAvro*(schema: ptr SerdesSchemaT,
                                avro: ptr AvroValueT,
                                payload: pointer,
-                               sizep: ptr int,
+                               sizep: ptr uint64,
                                errstr: cstring,
                                errstrSize: int): SerdesErrT
   {.cdecl, importc: "serdes_schema_serialize_avro", dynlib: serdesdll.}
@@ -64,3 +64,5 @@ proc serdesSchemaDefinition*(schema: ptr SerdesSchemaT): cstring {.cdecl,
 proc serdesNew*(conf: ptr SerdesConfT; errstr: cstring; errstrSize: int): ptr SerdesT {.
     cdecl, importc: "serdes_new", dynlib: serdesdll.}
 
+proc serdesFramingWrite*(schema: ptr SerdesSchemaT; payload: cstring; size: csize_t): csize_t {.
+    cdecl, importc: "serdes_framing_write", dynlib: serdesdll.}

@@ -1,11 +1,13 @@
 import
 
-  # ../libs/nim_kafka/nimkafka,
-  ../libs/nim_kafka/nimkafka_c,
+  ../libs/nim_kafka/nimkafka,
+  # ../libs/nim_kafka/nimkafka_c,
   ../libs/nim_avro/nimavro,
   ../libs/nim_serdes/nimserdes,
 
-  ./avro_example
+  ./avro_example,
+  ./avro_helpers
+
 
 
 #  Init Kafka Producer
@@ -36,7 +38,7 @@ echo repr(topicConf)
 let
   # resTopicSet = topicConf.rdKafkaTopicConfSet("message.copy.max.bytes".cstring, "1000000000".cstring,
   #                                              errstr3, 512)
-  topicName:cstring = "purchases"
+  topicName:cstring = "testTopic"
   topic = rd_kafka_topic_new(producer, topicName, topicConf)
   part:int32 = 0
 
@@ -45,12 +47,16 @@ var
   sconf: ptr SerdesConfT
   serdes: ptr SerdesT
   schema: ptr SerdesSchemaT
+  schemaKey: ptr SerdesSchemaT
   schemaName: cstring = "Person"
+  schemaKeyName: cstring = "Key"
   schemaDef: cstring
   errstrSize: int = 512
   serBuff: pointer
+  keySerBuff: pointer
 
-  serBuffSize: int = 5000
+
+  serBuffSize: uint64
 
 sconf = serdesConfNew(nil, 0, nil)
 discard serdesConfSet(sconf, "schema.registry.url".cstring, "http://localhost:8081".cstring,
@@ -63,7 +69,9 @@ if schema.isNil:
   schema = serdesSchemaAdd(serdes, schemaName, -1,
                            PERSON_SCHEMA.cstring, PERSON_SCHEMA.len,
                            errstr, errstr.len)
-# serdesSchemaDestroy(schema1)
+schemaKey = serdesSchemaAdd(serdes, schemaKeyName, -1,
+                            KEY_SCHEMA.cstring, KEY_SCHEMA.len,
+                            errstr, errstr.len)
 
 var
   personSchema = initPersonSchema()
@@ -71,6 +79,8 @@ var
             "088655555".string, 22)
   person2 = addPerson(personSchema, "Evgeni".string, "Dankov".string,
             "000000000".string, 22)
+
+  keyAvroValue = createAvroValueKey(schemaKey)
 
 echo schema.serdesSchemaName
 echo schema.serdesSchemaDefinition
@@ -82,12 +92,21 @@ echo serdesSchemaSerializeAvro(schema,
                                errstr,
                                errstr.len)
 
+echo serdesSchemaSerializeAvro(schemaKey,
+                               keyAvroValue.addr,
+                               keySerBuff.addr,
+                               serBuffSize.addr,
+                               errstr,
+                               errstr.len)
+var key = "812".cstring
+var message:cstring = "MESSAGE"
 let produceRes2 = rd_kafka_produce(topic,
                                    part,
                                    cast[cint](RD_KAFKA_MSG_F_COPY),
                                    serBuff,
                                    serBuffSize,
-                                   nil,0,nil)
+                                   keySerBuff,
+                                   serBuffSize,nil)
 
 echo serdesSchemaSerializeAvro(schema,
                                person2.addr,
@@ -99,15 +118,17 @@ echo serdesSchemaSerializeAvro(schema,
 let produceRes3 = rd_kafka_produce(topic,
                                    part,
                                    cast[cint](RD_KAFKA_MSG_F_COPY),
-                                   serBuff,
-                                   serBuffSize,
-                                   nil,0,nil)
+                                   message,
+                                   250,
+                                   key,5,nil)
+deallocImpl(serBuff)
 
 discard rd_kafka_flush(producer, 10*1000)
 
 var
   lowOffset: int64
   highOffset: int64
+
 echo rdKafkaQueryWatermarkOffsets(producer, topicName, part, lowOffset.addr, highOffset.addr, 1)
 echo lowOffset
 echo highOffset

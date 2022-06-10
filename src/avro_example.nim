@@ -12,6 +12,11 @@ let PERSON_SCHEMA* =
          {"name": "Phone", "type": "string"},
          {"name": "Age", "type": "int"}]}
   """
+let KEY_SCHEMA* =
+  """
+    {"name": "Key", "type": "long"}
+  """
+
 let otherChema =  "{\"type\":\"record\","&
                     "\"name\":\"myrecord\","&
                     "\"fields\":[{\"name\":\"f1\",\"type\":\"string\"}]}"
