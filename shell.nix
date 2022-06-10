@@ -1,8 +1,8 @@
 { pkgs ? import <nixpkgs> { } }: with pkgs;
 
-# let
-#   myglib = callPackage nix/pkgs/glib/default.nix { util-linuxMinimal = glib; };
-# in
+let
+  avro-c = callPackage nix/pkgs/avro-c/default.nix { };
+in
 mkShell {
 
   buildInputs = [
@@ -13,14 +13,14 @@ mkShell {
     pkg-config
     rdkafka
     avro-c
-    zlib
-    libserdes
+    (libserdes.override { inherit avro-c; })
     glib
+    lzma
+    snappy.dev
   ];
 
   shellHook = ''
-    figlet "Welcome to Kafka C - Getting Started"
-    echo $LIBCLANG_PATH
+    figlet "Welcome to Kafka-Getting started"
 
   '';
 }
